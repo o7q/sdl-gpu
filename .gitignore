@@ -1,0 +1,6 @@
+.cache
+libs
+sdl_gpu
+sdl_gpu.exe
+build
+build_windows
