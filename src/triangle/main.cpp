@@ -27,7 +27,7 @@ SDL_GPUShader *loadVertexShader(SDL_GPUDevice *device)
     vertexInfo.num_samplers         = 0;
     vertexInfo.num_storage_buffers  = 0;
     vertexInfo.num_storage_textures = 0;
-    vertexInfo.num_uniform_buffers  = 1;
+    vertexInfo.num_uniform_buffers  = 0;
     SDL_GPUShader *vertexShader     = SDL_CreateGPUShader(device, &vertexInfo);
     SDL_free(vertexCode);
     return vertexShader;
@@ -212,9 +212,6 @@ int main()
         bufferBindings[0].offset = 0;
 
         SDL_BindGPUVertexBuffers(renderPass, 0, bufferBindings, 1);
-
-        float time = SDL_GetTicks() / 1000.0f;
-        SDL_PushGPUVertexUniformData(cb, 0, &time, sizeof(time));
 
         SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
 
