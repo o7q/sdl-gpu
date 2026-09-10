@@ -31,7 +31,7 @@ VSOutput main(VSInput input)
 {
 	VSOutput output;
 	float2 outPos = input.position.xy;
-	float triangleSize = 5;
+	float triangleSize = 10;
 
 	float screenMin = min(screenSize.x, screenSize.y);
 	float scaleFactor = min(triangleSize, screenMin);

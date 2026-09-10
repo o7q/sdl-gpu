@@ -204,7 +204,7 @@ int main()
 
         SDL_BindGPUVertexBuffers(renderPass, 0, bufferBindings, 1);
 
-        SDL_DrawGPUPrimitives(renderPass, 3, 1000000, 0, 0);
+        SDL_DrawGPUPrimitives(renderPass, 3, 10000, 0, 0);
 
         SDL_EndGPURenderPass(renderPass);
         SDL_SubmitGPUCommandBuffer(cb);
