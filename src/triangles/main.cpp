@@ -3,6 +3,7 @@
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_iostream.h>
+#include <SDL3/SDL_thread.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <array>
@@ -10,46 +11,33 @@
 
 struct Vertex
 {
-    float x = 0.0f, y = 0.0f, z = 0.0f;
-    float r = 0.0f, g = 0.0f, b = 0.0f, a = 1.0f;
+    float x = 0.0f, y = 0.0f;
 };
 
-SDL_GPUShader *loadVertexShader(SDL_GPUDevice *device)
+struct Uniforms
 {
-    size_t vertexCodeSize;
-    void *vertexCode = SDL_LoadFile("src/triangle/vertex.spv", &vertexCodeSize);
-    SDL_GPUShaderCreateInfo vertexInfo{};
-    vertexInfo.code                 = (Uint8 *)vertexCode;
-    vertexInfo.code_size            = vertexCodeSize;
-    vertexInfo.entrypoint           = "main";
-    vertexInfo.format               = SDL_GPU_SHADERFORMAT_SPIRV;
-    vertexInfo.stage                = SDL_GPU_SHADERSTAGE_VERTEX;
-    vertexInfo.num_samplers         = 0;
-    vertexInfo.num_storage_buffers  = 0;
-    vertexInfo.num_storage_textures = 0;
-    vertexInfo.num_uniform_buffers  = 0;
-    SDL_GPUShader *vertexShader     = SDL_CreateGPUShader(device, &vertexInfo);
-    SDL_free(vertexCode);
-    return vertexShader;
-}
+    int sizeX, sizeY;
+    int time;
+};
 
-SDL_GPUShader *loadFragmentShader(SDL_GPUDevice *device)
+SDL_GPUShader *loadShader(SDL_GPUDevice *device, const std::string &path, SDL_GPUShaderStage stage,
+                          SDL_GPUShaderFormat format, int samplerCount, int uniformCount)
 {
-    size_t fragmentCodeSize;
-    void *fragmentCode = SDL_LoadFile("src/triangle/fragment.spv", &fragmentCodeSize);
-    SDL_GPUShaderCreateInfo fragmentInfo{};
-    fragmentInfo.code                 = (Uint8 *)fragmentCode;
-    fragmentInfo.code_size            = fragmentCodeSize;
-    fragmentInfo.entrypoint           = "main";
-    fragmentInfo.format               = SDL_GPU_SHADERFORMAT_SPIRV;
-    fragmentInfo.stage                = SDL_GPU_SHADERSTAGE_FRAGMENT;
-    fragmentInfo.num_samplers         = 0;
-    fragmentInfo.num_storage_buffers  = 0;
-    fragmentInfo.num_storage_textures = 0;
-    fragmentInfo.num_uniform_buffers  = 0;
-    SDL_GPUShader *fragmentShader     = SDL_CreateGPUShader(device, &fragmentInfo);
-    SDL_free(fragmentCode);
-    return fragmentShader;
+    size_t codeSize;
+    void *code = SDL_LoadFile(path.data(), &codeSize);
+    SDL_GPUShaderCreateInfo info{};
+    info.code                 = (Uint8 *)code;
+    info.code_size            = codeSize;
+    info.entrypoint           = "main";
+    info.format               = format;
+    info.stage                = stage;
+    info.num_samplers         = samplerCount;
+    info.num_storage_buffers  = 0;
+    info.num_storage_textures = 0;
+    info.num_uniform_buffers  = uniformCount;
+    SDL_GPUShader *shader     = SDL_CreateGPUShader(device, &info);
+    SDL_free(code);
+    return shader;
 }
 
 int main()
@@ -79,18 +67,17 @@ int main()
     // bottom left
     tri[0].x = -1.0f;
     tri[0].y = -1.0f;
-    tri[0].r = 1.0f;
     // bottom right
     tri[1].x = 1.0f;
     tri[1].y = -1.0f;
-    tri[1].g = 1.0f;
     // top
     tri[2].x = 0.0f;
     tri[2].y = 1.0f;
-    tri[2].b = 1.0f;
 
-    SDL_GPUShader *vertexShader   = loadVertexShader(device);
-    SDL_GPUShader *fragmentShader = loadFragmentShader(device);
+    SDL_GPUShader *vertexShader   = loadShader(device, "src/triangles/vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
+                                               SDL_GPU_SHADERFORMAT_SPIRV, 0, 1);
+    SDL_GPUShader *fragmentShader = loadShader(
+        device, "src/triangles/fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, SDL_GPU_SHADERFORMAT_SPIRV, 0, 0);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
 
@@ -106,18 +93,13 @@ int main()
     pipelineInfo.vertex_input_state.num_vertex_buffers         = 1;
     pipelineInfo.vertex_input_state.vertex_buffer_descriptions = vertexBufferDescriptions;
 
-    SDL_GPUVertexAttribute vertexAttributes[2];
+    SDL_GPUVertexAttribute vertexAttributes[1];
     // a_position
-    vertexAttributes[0].buffer_slot = 0;
-    vertexAttributes[0].location    = 0;
-    vertexAttributes[0].format      = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;
-    vertexAttributes[0].offset      = 0;
-    // a_color
-    vertexAttributes[1].buffer_slot                       = 0;
-    vertexAttributes[1].location                          = 1;
-    vertexAttributes[1].format                            = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4;
-    vertexAttributes[1].offset                            = sizeof(float) * 3;
-    pipelineInfo.vertex_input_state.num_vertex_attributes = 2;
+    vertexAttributes[0].buffer_slot                       = 0;
+    vertexAttributes[0].location                          = 0;
+    vertexAttributes[0].format                            = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2;
+    vertexAttributes[0].offset                            = 0;
+    pipelineInfo.vertex_input_state.num_vertex_attributes = 1;
     pipelineInfo.vertex_input_state.vertex_attributes     = vertexAttributes;
 
     SDL_GPUColorTargetDescription colorTargetDescriptions[1];
@@ -151,9 +133,7 @@ int main()
     SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(device, &transferInfo);
 
     Vertex *data = (Vertex *)SDL_MapGPUTransferBuffer(device, transferBuffer, false);
-    data[0]      = tri[0];
-    data[1]      = tri[1];
-    data[2]      = tri[2];
+    SDL_memcpy(data, &tri, sizeof(tri));
     SDL_UnmapGPUTransferBuffer(device, transferBuffer);
 
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(device);
@@ -173,6 +153,11 @@ int main()
     SDL_EndGPUCopyPass(copyPass);
     SDL_SubmitGPUCommandBuffer(commandBuffer);
 
+    SDL_SetGPUSwapchainParameters(device, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+                                  SDL_GPU_PRESENTMODE_IMMEDIATE);
+
+    Uint32 startTicks = SDL_GetTicks();
+    int frameCount    = 0;
     while (running)
     {
         SDL_Event event;
@@ -207,16 +192,31 @@ int main()
         SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(cb, &colorTargetInfo, 1, nullptr);
         SDL_BindGPUGraphicsPipeline(renderPass, graphicsPipeline);
 
+        Uniforms uniforms;
+        uniforms.sizeX = width;
+        uniforms.sizeY = height;
+        uniforms.time  = SDL_GetTicks();
+        SDL_PushGPUComputeUniformData(cb, 0, &uniforms, sizeof(uniforms));
+
         SDL_GPUBufferBinding bufferBindings[1];
         bufferBindings[0].buffer = vertexBuffer;
         bufferBindings[0].offset = 0;
 
         SDL_BindGPUVertexBuffers(renderPass, 0, bufferBindings, 1);
 
-        SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+        SDL_DrawGPUPrimitives(renderPass, 3, 1000000, 0, 0);
 
         SDL_EndGPURenderPass(renderPass);
         SDL_SubmitGPUCommandBuffer(cb);
+
+        Uint32 currentTicks = SDL_GetTicks();
+        frameCount++;
+        if (currentTicks - startTicks >= 1000)
+        {
+            std::cout << frameCount << std::endl;
+            frameCount = 0;
+            startTicks = currentTicks;
+        }
     }
 
     SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
