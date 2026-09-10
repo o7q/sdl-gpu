@@ -120,8 +120,6 @@ int main()
     SDL_ReleaseGPUShader(device, fragmentShader);
     SDL_ReleaseGPUShader(device, vertexShader);
 
-    bool running = true;
-
     SDL_GPUBufferCreateInfo bufferInfo{};
     bufferInfo.size             = sizeof(tri);
     bufferInfo.usage            = SDL_GPU_BUFFERUSAGE_VERTEX;
@@ -156,8 +154,13 @@ int main()
     SDL_SetGPUSwapchainParameters(device, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
                                   SDL_GPU_PRESENTMODE_IMMEDIATE);
 
+    SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
+
     Uint32 startTicks = SDL_GetTicks();
     int frameCount    = 0;
+
+    bool running = true;
+
     while (running)
     {
         SDL_Event event;
@@ -219,7 +222,6 @@ int main()
         }
     }
 
-    SDL_ReleaseGPUTransferBuffer(device, transferBuffer);
     SDL_ReleaseGPUBuffer(device, vertexBuffer);
 
     SDL_DestroyGPUDevice(device);
