@@ -199,7 +199,7 @@ int main()
         uniforms.sizeX = width;
         uniforms.sizeY = height;
         uniforms.time  = SDL_GetTicks();
-        SDL_PushGPUComputeUniformData(cb, 0, &uniforms, sizeof(uniforms));
+        SDL_PushGPUVertexUniformData(cb, 0, &uniforms, sizeof(uniforms));
 
         SDL_GPUBufferBinding bufferBindings[1];
         bufferBindings[0].buffer = vertexBuffer;
