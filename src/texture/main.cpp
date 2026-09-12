@@ -312,7 +312,7 @@ int main()
         textureBinding.texture = texture;
         textureBinding.sampler = sampler;
         SDL_BindGPUFragmentSamplers(renderPass, 0, &textureBinding, 1);
-        SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(renderPass, 4, 1, 0, 0, 0);
 
         SDL_EndGPURenderPass(renderPass);
 
