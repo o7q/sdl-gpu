@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(sdl_gpu)
 
-set(EXAMPLE shaderblend)
+set(EXAMPLE sprites)
 add_executable(${PROJECT_NAME} "src/${EXAMPLE}/main.cpp")
 
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "./src")
