@@ -1,9 +1,38 @@
 #include "renderer.hpp"
+#include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_timer.h>
+#include <cstring>
 
 void Renderer::draw()
 {
+    for (Sprite& sprite : m_sprites)
+    {
+        // sprite.size.x += 0.01f;
+        sprite.angle += 0.01f;
+    }
+
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
+
+    // COPY
+    SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
+
+    void *data = SDL_MapGPUTransferBuffer(m_device, m_transferBuffer, false);
+    std::memcpy(data, m_sprites.data(), m_sprites.size() * sizeof(Sprite));
+    SDL_UnmapGPUTransferBuffer(m_device, m_transferBuffer);
+
+    SDL_GPUTransferBufferLocation location{};
+    location.transfer_buffer = m_transferBuffer;
+    location.offset          = 0;
+
+    SDL_GPUBufferRegion region{};
+    region.buffer = m_spriteBuffer;
+    region.size   = sizeof(Sprite) * m_sprites.size();
+    region.offset = 0;
+
+    SDL_UploadToGPUBuffer(copyPass, &location, &region, true);
+
+    SDL_EndGPUCopyPass(copyPass);
+    //
 
     // RENDER
     SDL_GPUColorTargetInfo colorTargetInfo{};
@@ -15,13 +44,11 @@ void Renderer::draw()
     SDL_BindGPUGraphicsPipeline(renderPass, m_spritePipeline);
 
     SpriteUniform uniform;
-    uniform.sprite.position = {10, 10};
-    uniform.sprite.size     = {30, 30};
-    uniform.sprite.angle    = SDL_GetTicks() / 1000.0f;
-    uniform.screenSize      = {(float)m_width, (float)m_height};
+    uniform.screenSize = {(float)m_width, (float)m_height};
 
+    SDL_BindGPUVertexStorageBuffers(renderPass, 0, &m_spriteBuffer, 1);
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &uniform, sizeof(uniform));
-    SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
+    SDL_DrawGPUPrimitives(renderPass, 6, m_sprites.size(), 0, 0);
 
     SDL_EndGPURenderPass(renderPass);
     //
@@ -52,8 +79,11 @@ void Renderer::draw()
     SDL_BindGPUFragmentSamplers(renderPass, 0, &textureBinding, 1);
 
     float ratios[2]{(float)width / (float)height, (float)m_width / (float)m_height};
-
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &ratios, sizeof(ratios));
+
+    float size[2]{(float)m_width, (float)m_height};
+    SDL_PushGPUFragmentUniformData(commandBuffer, 0, &size, sizeof(size));
+
     SDL_DrawGPUPrimitives(renderPass2, 6, 1, 0, 0);
 
     SDL_EndGPURenderPass(renderPass2);

@@ -8,7 +8,6 @@ struct Output
 {
 	float4 position : SV_POSITION;
 	float4 color : TEXCOORD0;
-	int2 pixelPos : TEXCOORD1;
 };
 
 struct Sprite
@@ -16,13 +15,14 @@ struct Sprite
 	float2 position;
 	float2 size;
 	float angle;
-	float3 _pad1;
+	float3 _pad;
 	float4 color;
 };	
 
+StructuredBuffer<Sprite> spriteBuffer : register(t0);
+
 cbuffer Uniforms : register(b0, space1)
 {
-	Sprite sprite;
 	float2 screenSize;
 };
 
@@ -43,6 +43,7 @@ Output main(Input input)
 	const float2 verts[6] = { float2(-1, 1), float2(1, 1), float2(-1, -1), float2(1, 1), float2(1, -1), float2(-1, -1) };
 
 	float2 vert = verts[input.vertID];
+	Sprite sprite = spriteBuffer[input.instanceID];
 
 	float newX = vert.x * cos(sprite.angle) - vert.y * sin(sprite.angle);
 	float newY = vert.x * sin(sprite.angle) + vert.y * cos(sprite.angle);
@@ -51,17 +52,14 @@ Output main(Input input)
 	vert *= sprite.size / screenSize;
 	vert -= 1.0f;
 
-
 	vert = normalToScreen(vert);
-	
-	vert.x += 20;
-	vert.y += 20;
+
+	vert += sprite.position;
 
 	vert = screenToNormal(vert);
 
 	output.position = float4(vert, 0.0f, 1.0f);
 	output.color = sprite.color;
-	output.pixelPos = (vert + 1.0f) * 0.5f;
 
 	return output;
 }

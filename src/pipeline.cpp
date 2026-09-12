@@ -5,7 +5,7 @@ void Renderer::init_sprite_pipeline()
 {
     SDL_GPUShader *vertexShader =
         loadShader(m_device, "src/compiled/sprite.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 0, 0, 1);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 1, 0, 1);
     SDL_GPUShader *fragmentShader =
         loadShader(m_device, "src/compiled/sprite.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
                    SDL_GPU_SHADERFORMAT_SPIRV, 0, 0, 0, 0);
@@ -41,7 +41,7 @@ void Renderer::init_render_pipeline()
                    SDL_GPU_SHADERFORMAT_SPIRV, 0, 0, 0, 1);
     SDL_GPUShader *fragmentShader =
         loadShader(m_device, "src/compiled/screen.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 0, 0, 0);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 0, 0, 1);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
 

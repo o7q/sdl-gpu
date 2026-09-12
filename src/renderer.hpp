@@ -2,9 +2,38 @@
 
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_init.h>
+#include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <iostream>
+#include <random>
+#include <vector>
+
+inline uint32_t hash(uint32_t value, uint32_t seed)
+{
+    value ^= seed;
+    value ^= value >> 16;
+    value *= 0x85ebca6b;
+    value ^= value >> 13;
+    value *= 0xc2b2ae35;
+    value ^= value >> 16;
+    return value;
+}
+
+inline uint32_t randomInt(int32_t min, int32_t max)
+{
+    if (min >= max)
+    {
+        return min;
+    }
+
+    uint32_t minU  = static_cast<uint32_t>(min);
+    uint32_t maxU  = static_cast<uint32_t>(max);
+    uint32_t range = maxU - minU;
+
+    static std::minstd_rand gen(std::random_device{}());
+    return static_cast<int32_t>(static_cast<uint32_t>(gen()) % range + minU);
+}
 
 struct Vec2
 {
@@ -16,13 +45,12 @@ struct Sprite
     Vec2 position;
     Vec2 size;
     float angle = 0.0f;
-    float _pad1[3];
+    float _pad[3];
     float r = 1.0f, g = 0.0f, b = 0.0f, a = 1.0f;
 };
 
 struct SpriteUniform
 {
-    Sprite sprite;
     Vec2 screenSize;
 };
 
@@ -79,6 +107,28 @@ class Renderer
         samplerInfo.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
         m_sampler                  = SDL_CreateGPUSampler(m_device, &samplerInfo);
 
+        SDL_GPUBufferCreateInfo bufferInfo{};
+        bufferInfo.size  = sizeof(Sprite) * m_maxSprites;
+        bufferInfo.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
+        m_spriteBuffer   = SDL_CreateGPUBuffer(m_device, &bufferInfo);
+
+        SDL_GPUTransferBufferCreateInfo transferInfo{};
+        transferInfo.size  = sizeof(Sprite) * m_maxSprites;
+        transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+        m_transferBuffer   = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
+
+        for (int i = 0; i < 10000; ++i)
+        {
+            Sprite sprite;
+            sprite.position = {(float)randomInt(0, m_width), (float)randomInt(0, m_height)};
+            sprite.size     = {(float)randomInt(5, 40), (float)randomInt(5, 40)};
+            sprite.angle    = (float)randomInt(5, 20);
+            sprite.r        = randomInt(0, 255) / 255.0f;
+            sprite.g        = randomInt(0, 255) / 255.0f;
+            sprite.b        = randomInt(0, 255) / 255.0f;
+            m_sprites.push_back(sprite);
+        }
+
         Uint64 startTicks = SDL_GetTicks();
         int frameCount    = 0;
         bool running      = true;
@@ -95,6 +145,8 @@ class Renderer
                 }
             }
 
+            // m_sprites.clear();
+
             draw();
 
             Uint64 currentTicks = SDL_GetTicks();
@@ -106,6 +158,9 @@ class Renderer
                 startTicks = currentTicks;
             }
         }
+
+        SDL_ReleaseGPUTransferBuffer(m_device, m_transferBuffer);
+        SDL_ReleaseGPUBuffer(m_device, m_spriteBuffer);
 
         SDL_DestroyGPUDevice(m_device);
         SDL_DestroyWindow(m_window);
@@ -126,6 +181,11 @@ class Renderer
     Uint32 m_width, m_height;
     SDL_GPUTexture *m_texture = nullptr;
     SDL_GPUSampler *m_sampler = nullptr;
+
+    std::vector<Sprite> m_sprites;
+    Uint32 m_maxSprites                     = 100000;
+    SDL_GPUBuffer *m_spriteBuffer           = nullptr;
+    SDL_GPUTransferBuffer *m_transferBuffer = nullptr;
 
     SDL_GPUGraphicsPipeline *m_spritePipeline;
     SDL_GPUGraphicsPipeline *m_renderPipeline;
