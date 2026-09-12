@@ -9,16 +9,24 @@
 #include <cstring>
 #include <iostream>
 
-// struct Sprite
-// {
-//     float x, y, scale;
-//     float r, g, b, a;
-// };
-
-struct DrawData
+struct Vec2
 {
-    int time;
-    int drawSizeX, drawSizeY;
+    float x = 0.0f, y = 0.0f;
+};
+
+struct Sprite
+{
+    Vec2 position;
+    Vec2 size;
+    float angle = 0.0f;
+    float _pad1[3];
+    float r = 1.0f, g = 0.0f, b = 0.0f, a = 1.0f;
+};
+
+struct SpriteUniform
+{
+    Sprite sprite;
+    Vec2 screenSize;
 };
 
 SDL_GPUShader *loadShader(SDL_GPUDevice *device, const std::string &path, SDL_GPUShaderStage stage,
@@ -146,8 +154,8 @@ int main()
 
     bool running = true;
 
-    int drawWidth  = 100;
-    int drawHeight = 64;
+    Uint32 drawWidth  = 100;
+    Uint32 drawHeight = 64;
 
     SDL_GPUTextureCreateInfo textureInfo{};
     textureInfo.format               = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
@@ -191,12 +199,13 @@ int main()
         SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(cb, &colorTargetInfo, 1, nullptr);
         SDL_BindGPUGraphicsPipeline(renderPass, spritePipeline);
 
-        DrawData data;
-        data.time      = SDL_GetTicks();
-        data.drawSizeX = drawWidth;
-        data.drawSizeY = drawHeight;
+        SpriteUniform uniform;
+        uniform.sprite.position = {10, 10};
+        uniform.sprite.size     = {30, 30};
+        uniform.sprite.angle = SDL_GetTicks() / 1000.0f;
+        uniform.screenSize      = {(float)drawWidth, (float)drawHeight};
 
-        SDL_PushGPUVertexUniformData(cb, 0, &data, sizeof(data));
+        SDL_PushGPUVertexUniformData(cb, 0, &uniform, sizeof(uniform));
         SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
 
         SDL_EndGPURenderPass(renderPass);
@@ -227,7 +236,7 @@ int main()
         textureBinding.sampler = sampler;
         SDL_BindGPUFragmentSamplers(renderPass, 0, &textureBinding, 1);
 
-        float ratios[2]{width / (float)height, drawWidth / (float)drawHeight};
+        float ratios[2]{(float)width / (float)height, (float)drawWidth / (float)drawHeight};
 
         // std::cout << ratios[0] << std::endl;
         // std::cout << ratios[1] << std::endl;

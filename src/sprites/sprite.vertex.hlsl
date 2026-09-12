@@ -7,13 +7,23 @@ struct Input
 struct Output
 {
 	float4 position : SV_POSITION;
-	float2 texPos : TEXCOORD0;
+	float4 color : TEXCOORD0;
+	int2 pixelPos : TEXCOORD1;
 };
+
+struct Sprite
+{
+	float2 position;
+	float2 size;
+	float angle;
+	float3 _pad1;
+	float4 color;
+};	
 
 cbuffer Uniforms : register(b0, space1)
 {
-	int time;
-	int2 screenSize;
+	Sprite sprite;
+	float2 screenSize;
 };
 
 float2 normalToScreen(float2 normalPos)
@@ -34,23 +44,25 @@ Output main(Input input)
 
 	float2 vert = verts[input.vertID];
 
-	vert = normalToScreen(vert);
-	vert -= screenSize * 0.5;
-
-	vert *= 0.5;
-
-	float angle = time / 500.0f;
-
-
-	float newX = vert.x * cos(angle) - vert.y * sin(angle);
-	float newY = vert.x * sin(angle) + vert.y * cos(angle);
-
+	float newX = vert.x * cos(sprite.angle) - vert.y * sin(sprite.angle);
+	float newY = vert.x * sin(sprite.angle) + vert.y * cos(sprite.angle);
 	vert = float2(newX, newY);
-		vert += screenSize * 0.5;
+
+	vert *= sprite.size / screenSize;
+	vert -= 1.0f;
+
+
+	vert = normalToScreen(vert);
+
+
+	vert.x += 20;
+	vert.y += 20;
+
 	vert = screenToNormal(vert);
 
 	output.position = float4(vert, 0.0f, 1.0f);
-	output.texPos = (vert + 1.0f) * 0.5f;
+	output.color = sprite.color;
+	output.pixelPos = (vert + 1.0f) * 0.5f;
 
 	return output;
 }

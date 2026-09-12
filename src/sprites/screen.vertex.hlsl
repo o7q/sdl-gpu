@@ -34,16 +34,6 @@ Output main(Input input)
 		vert.y = (vert.y / drawRatio) * screenRatio;
 	}
 
-	
-	// if (screenRatio > drawRatio)
-	// {
-	// 	vert.x /= screenRatio;
-	// }
-	// else {
-	// 	// vert.x *= screenRatio;
-	// }
-	// vert /= 2.0f;
-
 	output.Position = float4(vert, 0.0f, 1.0f);
 	output.texCoord = (texCoord + 1.0f) * 0.5f;
 	return output;

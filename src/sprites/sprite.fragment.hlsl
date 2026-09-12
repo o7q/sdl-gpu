@@ -1,10 +1,16 @@
 struct Input
 {
-    float2 texPos : TEXCOORD0;
-    uint instanceID : SV_INSTANCEID;
+    float4 color : TEXCOORD0;
+    float4 pixelPos : SV_POSITION;
 };
 
 float4 main(Input input) : SV_TARGET
 {
-    return float4(input.texPos.xy, 0.0f, 0.5f);
+    float4 color = input.color;
+
+    if ((int)input.pixelPos.x % 2 == 0)
+    {
+        color *= 0.9f;
+    }
+    return color;
 }
