@@ -7,8 +7,8 @@ void Renderer::draw()
 {
     for (Sprite& sprite : m_sprites)
     {
-        // sprite.size.x += 0.01f;
-        sprite.angle += 0.01f;
+        sprite.position.x += 0.01f;
+        sprite.angle += 0.001f;
     }
 
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
@@ -16,7 +16,7 @@ void Renderer::draw()
     // COPY
     SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
-    void *data = SDL_MapGPUTransferBuffer(m_device, m_transferBuffer, false);
+    void *data = SDL_MapGPUTransferBuffer(m_device, m_transferBuffer, true);
     std::memcpy(data, m_sprites.data(), m_sprites.size() * sizeof(Sprite));
     SDL_UnmapGPUTransferBuffer(m_device, m_transferBuffer);
 
@@ -71,12 +71,12 @@ void Renderer::draw()
     colorTargetInfo2.texture     = swapchainTexture;
 
     SDL_GPURenderPass *renderPass2 = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo2, 1, nullptr);
-    SDL_BindGPUGraphicsPipeline(renderPass, m_renderPipeline);
+    SDL_BindGPUGraphicsPipeline(renderPass2, m_renderPipeline);
 
     SDL_GPUTextureSamplerBinding textureBinding;
     textureBinding.texture = m_texture;
     textureBinding.sampler = m_sampler;
-    SDL_BindGPUFragmentSamplers(renderPass, 0, &textureBinding, 1);
+    SDL_BindGPUFragmentSamplers(renderPass2, 0, &textureBinding, 1);
 
     float ratios[2]{(float)width / (float)height, (float)m_width / (float)m_height};
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &ratios, sizeof(ratios));

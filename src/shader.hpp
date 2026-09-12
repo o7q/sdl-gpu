@@ -9,6 +9,7 @@ inline SDL_GPUShader *loadShader(SDL_GPUDevice *device, const std::string &path,
 {
     size_t codeSize;
     void *code = SDL_LoadFile(path.data(), &codeSize);
+    
     SDL_GPUShaderCreateInfo info{};
     info.code                 = (Uint8 *)code;
     info.code_size            = codeSize;

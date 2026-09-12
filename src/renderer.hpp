@@ -117,7 +117,7 @@ class Renderer
         transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
         m_transferBuffer   = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
 
-        for (int i = 0; i < 10000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             Sprite sprite;
             sprite.position = {(float)randomInt(0, m_width), (float)randomInt(0, m_height)};
