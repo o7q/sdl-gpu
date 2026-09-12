@@ -53,8 +53,7 @@ Output main(Input input)
 
 
 	vert = normalToScreen(vert);
-
-
+	
 	vert.x += 20;
 	vert.y += 20;
 

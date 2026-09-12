@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(sdl_gpu)
 
-set(EXAMPLE sprites)
-add_executable(${PROJECT_NAME} "src/${EXAMPLE}/main.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "./src")
 
