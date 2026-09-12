@@ -7,7 +7,7 @@ struct Input
 struct Output
 {
 	float4 position : SV_POSITION;
-	float4 color : TEXCOORD0;
+	float2 uv : TEXCOORD0;
 };
 
 struct Sprite
@@ -43,6 +43,7 @@ Output main(Input input)
 	const float2 verts[6] = { float2(-1, 1), float2(1, 1), float2(-1, -1), float2(1, 1), float2(1, -1), float2(-1, -1) };
 
 	float2 vert = verts[input.vertID];
+	float2 uv = (vert + 1.0f) * 0.5f;
 	Sprite sprite = spriteBuffer[input.instanceID];
 
 	float newX = vert.x * cos(sprite.angle) - vert.y * sin(sprite.angle);
@@ -59,7 +60,7 @@ Output main(Input input)
 	vert = screenToNormal(vert);
 
 	output.position = float4(vert, 0.0f, 1.0f);
-	output.color = sprite.color;
+	output.uv = uv;
 
 	return output;
 }

@@ -5,23 +5,23 @@
 
 void Renderer::draw()
 {
-    for (Sprite& sprite : m_sprites)
-    {
-        sprite.position.x += 0.01f;
-        sprite.angle += 0.001f;
-    }
+    // for (Sprite &sprite : m_sprites)
+    // {
+    //     sprite.position.x += 0.01f;
+    //     sprite.angle += 0.001f;
+    // }
 
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
 
     // COPY
     SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
-    void *data = SDL_MapGPUTransferBuffer(m_device, m_transferBuffer, true);
+    void *data = SDL_MapGPUTransferBuffer(m_device, m_spriteTransferBuffer, true);
     std::memcpy(data, m_sprites.data(), m_sprites.size() * sizeof(Sprite));
-    SDL_UnmapGPUTransferBuffer(m_device, m_transferBuffer);
+    SDL_UnmapGPUTransferBuffer(m_device, m_spriteTransferBuffer);
 
     SDL_GPUTransferBufferLocation location{};
-    location.transfer_buffer = m_transferBuffer;
+    location.transfer_buffer = m_spriteTransferBuffer;
     location.offset          = 0;
 
     SDL_GPUBufferRegion region{};
@@ -39,13 +39,18 @@ void Renderer::draw()
     colorTargetInfo.clear_color   = {0.1f, 0.1f, 0.1f, 1.0f};
     colorTargetInfo.load_op       = SDL_GPU_LOADOP_CLEAR;
     colorTargetInfo.store_op      = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.texture       = m_texture;
+    colorTargetInfo.texture       = m_drawTexture;
     SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
     SDL_BindGPUGraphicsPipeline(renderPass, m_spritePipeline);
 
     SpriteUniform uniform;
     uniform.screenSize = {(float)m_width, (float)m_height};
 
+    SDL_GPUTextureSamplerBinding spriteTextureBinding{};
+    spriteTextureBinding.sampler = m_sampler;
+    spriteTextureBinding.texture = m_atlasTexture;
+
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &spriteTextureBinding, 1);
     SDL_BindGPUVertexStorageBuffers(renderPass, 0, &m_spriteBuffer, 1);
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &uniform, sizeof(uniform));
     SDL_DrawGPUPrimitives(renderPass, 6, m_sprites.size(), 0, 0);
@@ -74,7 +79,7 @@ void Renderer::draw()
     SDL_BindGPUGraphicsPipeline(renderPass2, m_renderPipeline);
 
     SDL_GPUTextureSamplerBinding textureBinding;
-    textureBinding.texture = m_texture;
+    textureBinding.texture = m_drawTexture;
     textureBinding.sampler = m_sampler;
     SDL_BindGPUFragmentSamplers(renderPass2, 0, &textureBinding, 1);
 

@@ -8,7 +8,7 @@ void Renderer::init_sprite_pipeline()
                    SDL_GPU_SHADERFORMAT_SPIRV, 0, 1, 0, 1);
     SDL_GPUShader *fragmentShader =
         loadShader(m_device, "src/compiled/sprite.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 0, 0, 0);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 0, 0, 0);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
 

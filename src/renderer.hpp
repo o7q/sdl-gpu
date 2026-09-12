@@ -3,8 +3,12 @@
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include <cstring>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -89,39 +93,61 @@ class Renderer
         init_sprite_pipeline();
         init_render_pipeline();
 
+        init_texture();
+        init_sprites_buffer();
+
+        SDL_Surface *surface   = SDL_LoadPNG("src/sparklecat.png");
+        SDL_Surface *converted = SDL_ConvertSurface(surface, SDL_PIXELFORMAT_RGBA8888);
+        SDL_DestroySurface(surface);
+
+        if (!converted)
+        {
+            std::cout << "Error creating texture!" << std::endl;
+            return;
+        }
+
         SDL_GPUTextureCreateInfo textureInfo{};
+        textureInfo.type                 = SDL_GPU_TEXTURETYPE_2D;
         textureInfo.format               = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-        textureInfo.width                = width;
-        textureInfo.height               = height;
-        textureInfo.num_levels           = 1;
+        textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+        textureInfo.width                = converted->w;
+        textureInfo.height               = converted->h;
         textureInfo.layer_count_or_depth = 1;
-        textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
-        m_texture                        = SDL_CreateGPUTexture(m_device, &textureInfo);
-
-        SDL_GPUSamplerCreateInfo samplerInfo{};
-        samplerInfo.min_filter     = SDL_GPU_FILTER_NEAREST;
-        samplerInfo.mag_filter     = SDL_GPU_FILTER_NEAREST;
-        samplerInfo.mipmap_mode    = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
-        samplerInfo.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-        samplerInfo.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-        samplerInfo.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-        m_sampler                  = SDL_CreateGPUSampler(m_device, &samplerInfo);
-
-        SDL_GPUBufferCreateInfo bufferInfo{};
-        bufferInfo.size  = sizeof(Sprite) * m_maxSprites;
-        bufferInfo.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-        m_spriteBuffer   = SDL_CreateGPUBuffer(m_device, &bufferInfo);
+        textureInfo.num_levels           = 1;
+        m_atlasTexture                   = SDL_CreateGPUTexture(m_device, &textureInfo);
 
         SDL_GPUTransferBufferCreateInfo transferInfo{};
-        transferInfo.size  = sizeof(Sprite) * m_maxSprites;
-        transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-        m_transferBuffer   = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
+        transferInfo.usage    = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+        transferInfo.size     = converted->w * converted->h * 4;
+        m_atlasTransferBuffer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
 
-        for (int i = 0; i < 1000; ++i)
+        void *data = SDL_MapGPUTransferBuffer(m_device, m_atlasTransferBuffer, false);
+        std::memcpy(data, converted->pixels, converted->w * converted->h * 4);
+        SDL_UnmapGPUTransferBuffer(m_device, m_atlasTransferBuffer);
+
+        SDL_GPUTextureTransferInfo textureTransferInfo{};
+        textureTransferInfo.transfer_buffer = m_atlasTransferBuffer;
+        textureTransferInfo.offset          = 0;
+
+        SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
+        SDL_GPUCopyPass *copyPass           = SDL_BeginGPUCopyPass(commandBuffer);
+
+        SDL_GPUTextureRegion region{};
+        region.texture = m_atlasTexture;
+        region.w       = converted->w;
+        region.h       = converted->h;
+        region.d       = 1;
+
+        SDL_UploadToGPUTexture(copyPass, &textureTransferInfo, &region, false);
+        SDL_EndGPUCopyPass(copyPass);
+        SDL_SubmitGPUCommandBuffer(commandBuffer);
+
+        for (int i = 0; i < 10; ++i)
         {
             Sprite sprite;
             sprite.position = {(float)randomInt(0, m_width), (float)randomInt(0, m_height)};
-            sprite.size     = {(float)randomInt(5, 40), (float)randomInt(5, 40)};
+            float rand = (float)randomInt(5, 200);
+            sprite.size     = {rand, rand};
             sprite.angle    = (float)randomInt(5, 20);
             sprite.r        = randomInt(0, 255) / 255.0f;
             sprite.g        = randomInt(0, 255) / 255.0f;
@@ -159,8 +185,14 @@ class Renderer
             }
         }
 
-        SDL_ReleaseGPUTransferBuffer(m_device, m_transferBuffer);
+        SDL_ReleaseGPUTransferBuffer(m_device, m_spriteTransferBuffer);
         SDL_ReleaseGPUBuffer(m_device, m_spriteBuffer);
+
+        SDL_ReleaseGPUTransferBuffer(m_device, m_atlasTransferBuffer);
+        SDL_ReleaseGPUTexture(m_device, m_atlasTexture);
+
+        SDL_ReleaseGPUGraphicsPipeline(m_device, m_spritePipeline);
+        SDL_ReleaseGPUGraphicsPipeline(m_device, m_renderPipeline);
 
         SDL_DestroyGPUDevice(m_device);
         SDL_DestroyWindow(m_window);
@@ -173,19 +205,55 @@ class Renderer
 
     void init_sprite_pipeline();
     void init_render_pipeline();
+    void init_texture()
+    {
+        SDL_GPUTextureCreateInfo textureInfo{};
+        textureInfo.format               = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+        textureInfo.width                = m_width;
+        textureInfo.height               = m_height;
+        textureInfo.num_levels           = 1;
+        textureInfo.layer_count_or_depth = 1;
+        textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
+        m_drawTexture                    = SDL_CreateGPUTexture(m_device, &textureInfo);
+
+        SDL_GPUSamplerCreateInfo samplerInfo{};
+        samplerInfo.min_filter     = SDL_GPU_FILTER_NEAREST;
+        samplerInfo.mag_filter     = SDL_GPU_FILTER_NEAREST;
+        samplerInfo.mipmap_mode    = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
+        samplerInfo.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+        samplerInfo.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+        samplerInfo.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+        m_sampler                  = SDL_CreateGPUSampler(m_device, &samplerInfo);
+    }
+
+    void init_sprites_buffer()
+    {
+        SDL_GPUBufferCreateInfo bufferInfo{};
+        bufferInfo.size  = sizeof(Sprite) * m_maxSprites;
+        bufferInfo.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
+        m_spriteBuffer   = SDL_CreateGPUBuffer(m_device, &bufferInfo);
+
+        SDL_GPUTransferBufferCreateInfo transferInfo{};
+        transferInfo.size      = sizeof(Sprite) * m_maxSprites;
+        transferInfo.usage     = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+        m_spriteTransferBuffer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
+    }
 
   private:
     SDL_Window *m_window;
     SDL_GPUDevice *m_device;
 
     Uint32 m_width, m_height;
-    SDL_GPUTexture *m_texture = nullptr;
-    SDL_GPUSampler *m_sampler = nullptr;
+    SDL_GPUTexture *m_drawTexture = nullptr;
+    SDL_GPUSampler *m_sampler     = nullptr;
 
     std::vector<Sprite> m_sprites;
-    Uint32 m_maxSprites                     = 100000;
-    SDL_GPUBuffer *m_spriteBuffer           = nullptr;
-    SDL_GPUTransferBuffer *m_transferBuffer = nullptr;
+    Uint32 m_maxSprites                           = 100000;
+    SDL_GPUBuffer *m_spriteBuffer                 = nullptr;
+    SDL_GPUTransferBuffer *m_spriteTransferBuffer = nullptr;
+
+    SDL_GPUTexture *m_atlasTexture               = nullptr;
+    SDL_GPUTransferBuffer *m_atlasTransferBuffer = nullptr;
 
     SDL_GPUGraphicsPipeline *m_spritePipeline;
     SDL_GPUGraphicsPipeline *m_renderPipeline;
