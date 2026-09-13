@@ -1,16 +1,9 @@
 #include "renderer.hpp"
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_timer.h>
-#include <cstring>
 
 void Renderer::draw(std::vector<DrawInfo> &queue)
 {
-    // for (Sprite &sprite : m_sprites)
-    // {
-    //     sprite.position.x += 0.01f;
-    //     sprite.angle += 0.001f;
-    // }
-
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
     draw_upload_queue(queue, commandBuffer);
 
@@ -27,8 +20,6 @@ void Renderer::draw(std::vector<DrawInfo> &queue)
     }
 
     draw_blit_to_swapchain_texture(commandBuffer, swapchainTexture, width, height);
-
-    // //
 
     SDL_SubmitGPUCommandBuffer(commandBuffer);
 }

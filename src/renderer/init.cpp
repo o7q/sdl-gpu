@@ -1,13 +1,48 @@
 #include "renderer.hpp"
 #include "shader.hpp"
+#include <iostream>
+
+void Renderer::init()
+{
+    SDL_Init(SDL_INIT_VIDEO);
+    m_window = SDL_CreateWindow("Renderer", 1280, 720, SDL_WINDOW_RESIZABLE);
+    if (!m_window)
+    {
+        std::cout << "Failed to create window!" << std::endl;
+        return;
+    }
+
+    m_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr);
+    if (!m_device)
+    {
+        std::cout << "Failed to create device!" << std::endl;
+        return;
+    }
+
+    if (!SDL_ClaimWindowForGPUDevice(m_device, m_window))
+    {
+        std::cout << "Error claiming window!" << std::endl;
+        return;
+    }
+
+    SDL_SetGPUSwapchainParameters(m_device, m_window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+                                  SDL_GPU_PRESENTMODE_IMMEDIATE);
+
+    init_draw_pipeline();
+    init_blit_pipeline();
+
+    init_draw_texture();
+
+    init_object_buffers();
+}
 
 void Renderer::init_draw_pipeline()
 {
     SDL_GPUShader *vertexShader =
-        loadShader(m_device, "src/compiled/draw.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
+        loadShader(m_device, "src/renderer/compiled/draw.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
                    SDL_GPU_SHADERFORMAT_SPIRV, 0, 3, 0, 1);
     SDL_GPUShader *fragmentShader =
-        loadShader(m_device, "src/compiled/draw.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
+        loadShader(m_device, "src/renderer/compiled/draw.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
                    SDL_GPU_SHADERFORMAT_SPIRV, 0, 0, 0, 0);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
@@ -37,10 +72,10 @@ void Renderer::init_draw_pipeline()
 void Renderer::init_blit_pipeline()
 {
     SDL_GPUShader *vertexShader =
-        loadShader(m_device, "src/compiled/blit.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
+        loadShader(m_device, "src/renderer/compiled/blit.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
                    SDL_GPU_SHADERFORMAT_SPIRV, 0, 0, 0, 1);
     SDL_GPUShader *fragmentShader =
-        loadShader(m_device, "src/compiled/blit.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
+        loadShader(m_device, "src/renderer/compiled/blit.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
                    SDL_GPU_SHADERFORMAT_SPIRV, 1, 0, 0, 1);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};

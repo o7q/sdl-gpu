@@ -76,7 +76,7 @@ float2 handleRectangle(GPURectangleObject rectangle, float2 vert)
 
 float2 handleCircle(GPUCircleObject circle, float2 vert)
 {
-	vert *= (20 * 2) / screenSize;
+	vert *= (circle.radius * 2) / screenSize;
 	vert -= 1.0f;
 
 	vert = normalToScreen(vert);
