@@ -9,7 +9,7 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
 
     std::vector<DrawObject> objects;
     std::vector<RectangleObject> rectObjects;
-    std::vector<CircleObject> circleObjects;
+    std::vector<EllipseObject> ellipseObjects;
 
     for (DrawInfo &info : queue)
     {
@@ -27,18 +27,19 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
                                   objects.push_back(object);
                                   rectObjects.push_back(rectObject);
                               },
-                              [&objects, &circleObjects](const CircleDrawInfo &info_)
+                              [&objects, &ellipseObjects](const EllipseDrawInfo &info_)
                               {
                                   DrawObject object;
                                   object.objectType = 1;
-                                  object.index      = (int)circleObjects.size();
+                                  object.index      = (int)ellipseObjects.size();
 
-                                  CircleObject circleObject;
-                                  circleObject.position = info_.position;
-                                  circleObject.radius   = info_.radius;
+                                  EllipseObject ellipseObject;
+                                  ellipseObject.position = info_.position;
+                                  ellipseObject.size     = info_.size;
+                                  ellipseObject.angle    = info_.angle;
 
                                   objects.push_back(object);
-                                  circleObjects.push_back(circleObject);
+                                  ellipseObjects.push_back(ellipseObject);
                               }},
                    info.info);
     }
@@ -48,8 +49,8 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
     upload_object_buffer(copyPass, &m_objectBuffer, objects.data(), objects.size() * sizeof(DrawObject));
     upload_object_buffer(copyPass, &m_rectangleBuffer, rectObjects.data(),
                          rectObjects.size() * sizeof(RectangleObject));
-    upload_object_buffer(copyPass, &m_circleBuffer, circleObjects.data(),
-                         circleObjects.size() * sizeof(CircleObject));
+    upload_object_buffer(copyPass, &m_ellipseBuffer, ellipseObjects.data(),
+                         ellipseObjects.size() * sizeof(EllipseObject));
 
     SDL_EndGPUCopyPass(copyPass);
 }

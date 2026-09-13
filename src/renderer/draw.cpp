@@ -7,7 +7,7 @@ void Renderer::draw(std::vector<DrawInfo> &queue)
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
     draw_upload_queue(queue, commandBuffer);
 
-    draw_to_offscreen_texture(commandBuffer, queue.size());
+    draw_to_offscreen_texture(commandBuffer, (Uint32)queue.size());
 
     SDL_GPUTexture *swapchainTexture;
     Uint32 width, height;

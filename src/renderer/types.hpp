@@ -1,26 +1,23 @@
 #pragma once
 
+#include <px/math/vec.hpp>
 #include <variant>
-
-struct Vec2
-{
-    float x = 0.0f, y = 0.0f;
-};
 
 struct RectangleDrawInfo
 {
-    Vec2 position;
-    Vec2 size;
+    px::Vec2f position;
+    px::Vec2f size;
     float angle;
 };
 
-struct CircleDrawInfo
+struct EllipseDrawInfo
 {
-    Vec2 position;
-    float radius;
+    px::Vec2f position;
+    px::Vec2f size;
+    float angle;
 };
 
-using DrawInfoType = std::variant<RectangleDrawInfo, CircleDrawInfo>;
+using DrawInfoType = std::variant<RectangleDrawInfo, EllipseDrawInfo>;
 
 struct DrawInfo
 {

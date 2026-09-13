@@ -10,30 +10,40 @@
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <cstring>
+#include <px/math/vec.hpp>
 #include <vector>
 
 class Renderer
 {
   private:
-    struct RectangleObject
+    struct TextureObject
     {
-        Vec2 position;
-        Vec2 size;
+        px::Vec2f position;
+        px::Vec2f size;
         float angle;
         float _pad[3];
     };
 
-    struct CircleObject
+    struct RectangleObject
     {
-        Vec2 position;
-        float radius;
+        px::Vec2f position;
+        px::Vec2f size;
+        float angle;
+        float _pad[3];
+    };
+
+    struct EllipseObject
+    {
+        px::Vec2f position;
+        px::Vec2f size;
+        float angle;
         float _pad[3];
     };
 
     struct DrawObject
     {
         // 0: rectangle
-        // 1: circle
+        // 1: ellipse
         // used to determine which object buffer to read from
         int objectType;
         // index into the object buffer
@@ -54,12 +64,21 @@ class Renderer
         m_height = height;
 
         init();
+
+        // SDL_GPUTransferBufferCreateInfo transferInfo{};
+        // transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+        // transferInfo.size = 0;
+        // SDL_GPUTransferBuffer* transfer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
+
+        // SDL_GPUTextureTransferInfo info{};
+        // info.transfer_buffer = transfer;
+        // SDL_Bind
     }
     ~Renderer()
     {
         free_object_buffer(&m_objectBuffer);
         free_object_buffer(&m_rectangleBuffer);
-        free_object_buffer(&m_circleBuffer);
+        free_object_buffer(&m_ellipseBuffer);
 
         SDL_ReleaseGPUGraphicsPipeline(m_device, m_drawPipeline);
         SDL_ReleaseGPUGraphicsPipeline(m_device, m_blitPipeline);
@@ -82,53 +101,48 @@ class Renderer
                                         Uint32 width, Uint32 height);
 
     void init();
+
+    void init_atlas(SDL_Surface *atlas)
+    {
+        SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
+        SDL_GPUCopyPass *copyPass           = SDL_BeginGPUCopyPass(commandBuffer);
+
+        SDL_GPUTextureCreateInfo textureInfo{};
+        textureInfo.format               = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+        textureInfo.width                = (Uint32)atlas->w;
+        textureInfo.height               = (Uint32)atlas->h;
+        textureInfo.num_levels           = 1;
+        textureInfo.layer_count_or_depth = 1;
+        textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+        m_atlasTexture                   = SDL_CreateGPUTexture(m_device, &textureInfo);
+
+        SDL_GPUTransferBufferCreateInfo transferInfo{};
+        transferInfo.size                     = (Uint32)atlas->w * (Uint32)atlas->h * 4 * sizeof(Uint8);
+        transferInfo.usage                    = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+        SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
+
+        SDL_GPUTextureTransferInfo source{};
+        source.transfer_buffer = transferBuffer;
+
+        SDL_GPUTextureRegion dest{};
+        dest.texture = m_atlasTexture;
+        dest.w = (Uint32)atlas->w;
+        dest.h = (Uint32)atlas->h;
+        dest.d = 1;
+
+        SDL_UploadToGPUTexture(copyPass, &source, &dest, false);
+
+        SDL_EndGPUCopyPass(copyPass);
+        SDL_SubmitGPUCommandBuffer(commandBuffer);
+    }
+
     void init_draw_pipeline();
     void init_blit_pipeline();
     void init_draw_texture();
 
-    void upload_object_buffer(SDL_GPUCopyPass *copyPass, ObjectBuffer *buffer, void *data, size_t bytes)
-    {
-        void *mapping = SDL_MapGPUTransferBuffer(m_device, buffer->transfer, true);
-        std::memcpy(mapping, data, bytes);
-        SDL_UnmapGPUTransferBuffer(m_device, buffer->transfer);
-
-        SDL_GPUTransferBufferLocation location{};
-        location.transfer_buffer = buffer->transfer;
-        location.offset          = 0;
-
-        SDL_GPUBufferRegion region{};
-        region.buffer = buffer->buffer;
-        region.size   = (Uint32)bytes;
-        region.offset = 0;
-
-        SDL_UploadToGPUBuffer(copyPass, &location, &region, true);
-    }
-
-    void init_object_buffer(ObjectBuffer *buffer, Uint32 bytes)
-    {
-        SDL_GPUBufferCreateInfo bufferInfo{};
-        bufferInfo.size  = bytes;
-        bufferInfo.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-        buffer->buffer   = SDL_CreateGPUBuffer(m_device, &bufferInfo);
-
-        SDL_GPUTransferBufferCreateInfo transferInfo{};
-        transferInfo.size  = bytes;
-        transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-        buffer->transfer   = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
-    }
-
-    void init_object_buffers()
-    {
-        init_object_buffer(&m_objectBuffer, sizeof(DrawObject) * m_maxBufferSize);
-        init_object_buffer(&m_rectangleBuffer, sizeof(RectangleObject) * m_maxBufferSize);
-        init_object_buffer(&m_circleBuffer, sizeof(CircleObject) * m_maxBufferSize);
-    }
-
-    void free_object_buffer(ObjectBuffer *buffer)
-    {
-        SDL_ReleaseGPUBuffer(m_device, buffer->buffer);
-        SDL_ReleaseGPUTransferBuffer(m_device, buffer->transfer);
-    }
+    void upload_object_buffer(SDL_GPUCopyPass *copyPass, ObjectBuffer *buffer, void *data, size_t bytes);
+    void init_object_buffer(ObjectBuffer *buffer, Uint32 bytes);
+    void free_object_buffer(ObjectBuffer *buffer);
 
   private:
     SDL_Window *m_window    = nullptr;
@@ -141,8 +155,10 @@ class Renderer
     SDL_GPUTexture *m_drawTexture = nullptr;
     SDL_GPUSampler *m_sampler     = nullptr;
 
+    SDL_GPUTexture *m_atlasTexture = nullptr;
+
     Uint32 m_maxBufferSize = 10000;
     ObjectBuffer m_objectBuffer;
     ObjectBuffer m_rectangleBuffer;
-    ObjectBuffer m_circleBuffer;
+    ObjectBuffer m_ellipseBuffer;
 };

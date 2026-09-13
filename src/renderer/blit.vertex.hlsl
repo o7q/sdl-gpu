@@ -5,8 +5,8 @@ struct Input
 
 struct Output
 {
-	float2 texCoord : TEXCOORD0;
-	float4 Position : SV_Position;
+	float4 position : SV_Position;
+	float2 uv : TEXCOORD0;
 };
 
 cbuffer Uniforms : register(b0, space1)
@@ -23,7 +23,7 @@ Output main(Input input)
 
 	float2 vert = verts[input.vertID];
 	
-	float2 texCoord = vert;
+	float2 uv = vert;
 
 	if (screenRatio > drawRatio)
 	{
@@ -34,7 +34,7 @@ Output main(Input input)
 		vert.y = (vert.y / drawRatio) * screenRatio;
 	}
 
-	output.Position = float4(vert, 0.0f, 1.0f);
-	output.texCoord = (texCoord + 1.0f) * 0.5f;
+	output.position = float4(vert, 0.0f, 1.0f);
+	output.uv = (uv + 1.0f) * 0.5f;
 	return output;
 }

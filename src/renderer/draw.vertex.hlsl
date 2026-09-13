@@ -11,7 +11,7 @@ struct Output
 	float2 uv : TEXCOORD1;
 };
 
-struct GPURectangleObject
+struct RectangleObject
 {
     float2 position;
     float2 size;
@@ -19,17 +19,18 @@ struct GPURectangleObject
     float _pad[3];
 };
 
-struct GPUCircleObject
+struct EllipseObject
 {
     float2 position;
-    float radius;
+    float2 size;
+	float angle;
     float _pad[3];
 };
 
-struct GPUDrawObject
+struct DrawObject
 {
     // 0: rectangle
-    // 1: circle
+    // 1: ellipse
     // used to determine which object buffer to read from
     int objectType;
     // index into the object buffer
@@ -37,9 +38,9 @@ struct GPUDrawObject
     int2 _pad;
 };
 
-StructuredBuffer<GPUDrawObject> objectBuffer : register(t0, space0);
-StructuredBuffer<GPURectangleObject> rectangleBuffer : register(t1, space0);
-StructuredBuffer<GPUCircleObject> circleBuffer : register(t2, space0);
+StructuredBuffer<DrawObject> objectBuffer : register(t0, space0);
+StructuredBuffer<RectangleObject> rectangleBuffer : register(t1, space0);
+StructuredBuffer<EllipseObject> ellipseBuffer : register(t2, space0);
 
 cbuffer Uniforms : register(b0, space1)
 {
@@ -56,7 +57,7 @@ float2 screenToNormal(float2 screenPos)
 	return screenPos / screenSize * 2.0f - 1.0f;
 }
 
-float2 handleRectangle(GPURectangleObject rectangle, float2 vert)
+float2 handleRectangle(RectangleObject rectangle, float2 vert)
 {
 	vert *= rectangle.size / screenSize;
 	vert -= 1.0f;
@@ -74,14 +75,18 @@ float2 handleRectangle(GPURectangleObject rectangle, float2 vert)
 	return vert;
 }
 
-float2 handleCircle(GPUCircleObject circle, float2 vert)
+float2 handleEllipse(EllipseObject ellipse, float2 vert)
 {
-	vert *= (circle.radius * 2) / screenSize;
+	vert *= ellipse.size / screenSize;
 	vert -= 1.0f;
 
 	vert = normalToScreen(vert);
 
-	vert += circle.position;
+	float newX = vert.x * cos(ellipse.angle) - vert.y * sin(ellipse.angle);
+	float newY = vert.x * sin(ellipse.angle) + vert.y * cos(ellipse.angle);
+	vert = float2(newX, newY);
+
+	vert += ellipse.position;
 
 	vert = screenToNormal(vert);
 
@@ -96,20 +101,20 @@ Output main(Input input)
 
 	float2 vert = verts[input.vertID];
 	float2 uv = (vert + 1.0f) * 0.5f;
-	GPUDrawObject object = objectBuffer[input.instanceID];
+	DrawObject object = objectBuffer[input.instanceID];
 
 	switch (object.objectType)
 	{
 		case 0:
 		{
-			GPURectangleObject rect = rectangleBuffer[object.index];
+			RectangleObject rect = rectangleBuffer[object.index];
 			vert = handleRectangle(rect, vert);
 		}
 		break;
 		case 1:
 		{
-			GPUCircleObject circle = circleBuffer[object.index];
-			vert = handleCircle(circle, vert);
+			EllipseObject ellipse = ellipseBuffer[object.index];
+			vert = handleEllipse(ellipse, vert);
 		}
 		break;
 	}

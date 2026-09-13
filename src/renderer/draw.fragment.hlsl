@@ -4,6 +4,9 @@ struct Input
 	float2 uv : TEXCOORD1;
 };
 
+Texture2D<float4> swapchainTextue : register(t0, space2);
+SamplerState swapchainSampler : register(s0, space2);
+
 float4 main(Input input) : SV_TARGET
 {
     float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);

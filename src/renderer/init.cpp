@@ -33,7 +33,9 @@ void Renderer::init()
 
     init_draw_texture();
 
-    init_object_buffers();
+    init_object_buffer(&m_objectBuffer, sizeof(DrawObject) * m_maxBufferSize);
+    init_object_buffer(&m_rectangleBuffer, sizeof(RectangleObject) * m_maxBufferSize);
+    init_object_buffer(&m_ellipseBuffer, sizeof(EllipseObject) * m_maxBufferSize);
 }
 
 void Renderer::init_draw_pipeline()

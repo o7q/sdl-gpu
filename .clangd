@@ -1,4 +1,4 @@
 CompileFlags:
   Add:
     - -std=c++17
-  CompilationDatabase: "build_linux"
+  CompilationDatabase: "build"

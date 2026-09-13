@@ -1,5 +1,5 @@
-Texture2D<float4> Texture : register(t0, space2);
-SamplerState Sampler : register(s0, space2);
+Texture2D<float4> swapchainTextue : register(t0, space2);
+SamplerState swapchainSampler : register(s0, space2);
 
 cbuffer Uniforms : register(b0, space3)
 {
@@ -16,7 +16,7 @@ float2 screenToNormal(float2 screenPos)
 	return screenPos / screenSize;
 }
 
-float4 main(float2 TexCoord : TEXCOORD0) : SV_Target0
+float4 main(float2 uv : TEXCOORD0) : SV_Target0
 {
     // int radius = 10;
 
@@ -42,7 +42,7 @@ float4 main(float2 TexCoord : TEXCOORD0) : SV_Target0
 
     // sum /= (float)count;
 
-    float4 color = Texture.Sample(Sampler, TexCoord);
+    float4 color = swapchainTextue.Sample(swapchainSampler, uv);
     // color = float4(color.xyz + sum, color.w);
 
 	return color;
