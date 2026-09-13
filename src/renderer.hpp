@@ -53,11 +53,6 @@ struct Sprite
     float r = 1.0f, g = 0.0f, b = 0.0f, a = 1.0f;
 };
 
-struct SpriteUniform
-{
-    Vec2 screenSize;
-};
-
 class Renderer
 {
   public:
@@ -136,17 +131,17 @@ class Renderer
         region.texture = m_atlasTexture;
         region.w       = converted->w;
         region.h       = converted->h;
-        region.d       = 1;
+        // region.d       = 1;
 
         SDL_UploadToGPUTexture(copyPass, &textureTransferInfo, &region, false);
         SDL_EndGPUCopyPass(copyPass);
         SDL_SubmitGPUCommandBuffer(commandBuffer);
 
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             Sprite sprite;
             sprite.position = {(float)randomInt(0, m_width), (float)randomInt(0, m_height)};
-            float rand = (float)randomInt(5, 200);
+            float rand      = (float)randomInt(5, 100);
             sprite.size     = {rand, rand};
             sprite.angle    = (float)randomInt(5, 20);
             sprite.r        = randomInt(0, 255) / 255.0f;
@@ -202,42 +197,17 @@ class Renderer
 
   private:
     void draw();
+    void draw_upload_sprites(SDL_GPUCommandBuffer *commandBuffer);
+
+    void draw_layer_offscreen(SDL_GPUCommandBuffer *commandBuffer);
+
+    void draw_blit_to_swapchain_texture(SDL_GPUCommandBuffer *commandBuffer, SDL_GPUTexture *swapchainTexture,
+                                        Uint32 width, Uint32 height);
 
     void init_sprite_pipeline();
     void init_render_pipeline();
-    void init_texture()
-    {
-        SDL_GPUTextureCreateInfo textureInfo{};
-        textureInfo.format               = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-        textureInfo.width                = m_width;
-        textureInfo.height               = m_height;
-        textureInfo.num_levels           = 1;
-        textureInfo.layer_count_or_depth = 1;
-        textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
-        m_drawTexture                    = SDL_CreateGPUTexture(m_device, &textureInfo);
-
-        SDL_GPUSamplerCreateInfo samplerInfo{};
-        samplerInfo.min_filter     = SDL_GPU_FILTER_NEAREST;
-        samplerInfo.mag_filter     = SDL_GPU_FILTER_NEAREST;
-        samplerInfo.mipmap_mode    = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
-        samplerInfo.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-        samplerInfo.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-        samplerInfo.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-        m_sampler                  = SDL_CreateGPUSampler(m_device, &samplerInfo);
-    }
-
-    void init_sprites_buffer()
-    {
-        SDL_GPUBufferCreateInfo bufferInfo{};
-        bufferInfo.size  = sizeof(Sprite) * m_maxSprites;
-        bufferInfo.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-        m_spriteBuffer   = SDL_CreateGPUBuffer(m_device, &bufferInfo);
-
-        SDL_GPUTransferBufferCreateInfo transferInfo{};
-        transferInfo.size      = sizeof(Sprite) * m_maxSprites;
-        transferInfo.usage     = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-        m_spriteTransferBuffer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
-    }
+    void init_texture();
+    void init_sprites_buffer();
 
   private:
     SDL_Window *m_window;

@@ -66,3 +66,37 @@ void Renderer::init_render_pipeline()
     SDL_ReleaseGPUShader(m_device, fragmentShader);
     SDL_ReleaseGPUShader(m_device, vertexShader);
 }
+
+void Renderer::init_texture()
+{
+    SDL_GPUTextureCreateInfo textureInfo{};
+    textureInfo.format               = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+    textureInfo.width                = m_width;
+    textureInfo.height               = m_height;
+    textureInfo.num_levels           = 1;
+    textureInfo.layer_count_or_depth = 1;
+    textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
+    m_drawTexture                    = SDL_CreateGPUTexture(m_device, &textureInfo);
+
+    SDL_GPUSamplerCreateInfo samplerInfo{};
+    samplerInfo.min_filter     = SDL_GPU_FILTER_NEAREST;
+    samplerInfo.mag_filter     = SDL_GPU_FILTER_NEAREST;
+    samplerInfo.mipmap_mode    = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
+    samplerInfo.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+    samplerInfo.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+    samplerInfo.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+    m_sampler                  = SDL_CreateGPUSampler(m_device, &samplerInfo);
+}
+
+void Renderer::init_sprites_buffer()
+{
+    SDL_GPUBufferCreateInfo bufferInfo{};
+    bufferInfo.size  = sizeof(Sprite) * m_maxSprites;
+    bufferInfo.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
+    m_spriteBuffer   = SDL_CreateGPUBuffer(m_device, &bufferInfo);
+
+    SDL_GPUTransferBufferCreateInfo transferInfo{};
+    transferInfo.size      = sizeof(Sprite) * m_maxSprites;
+    transferInfo.usage     = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+    m_spriteTransferBuffer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
+}
