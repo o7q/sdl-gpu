@@ -2,6 +2,6 @@
 
 int main()
 {
-    Renderer renderer(1920, 1080);
+    Renderer renderer(256, 128);
     return 0;
 }

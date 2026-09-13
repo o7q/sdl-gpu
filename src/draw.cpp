@@ -3,7 +3,7 @@
 #include <SDL3/SDL_timer.h>
 #include <cstring>
 
-void Renderer::draw()
+void Renderer::draw(std::vector<DrawInfo> &queue)
 {
     // for (Sprite &sprite : m_sprites)
     // {
@@ -12,9 +12,9 @@ void Renderer::draw()
     // }
 
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
+    draw_upload_queue(queue, commandBuffer);
 
-    draw_upload_sprites(commandBuffer);
-    draw_layer_offscreen(commandBuffer);
+    draw_to_offscreen_texture(commandBuffer, queue.size());
 
     SDL_GPUTexture *swapchainTexture;
     Uint32 width, height;
@@ -28,7 +28,7 @@ void Renderer::draw()
 
     draw_blit_to_swapchain_texture(commandBuffer, swapchainTexture, width, height);
 
-    //
+    // //
 
     SDL_SubmitGPUCommandBuffer(commandBuffer);
 }

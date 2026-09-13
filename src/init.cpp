@@ -1,14 +1,14 @@
 #include "renderer.hpp"
 #include "shader.hpp"
 
-void Renderer::init_sprite_pipeline()
+void Renderer::init_draw_pipeline()
 {
     SDL_GPUShader *vertexShader =
-        loadShader(m_device, "src/compiled/sprite.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 1, 0, 1);
+        loadShader(m_device, "src/compiled/draw.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
+                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 3, 0, 1);
     SDL_GPUShader *fragmentShader =
-        loadShader(m_device, "src/compiled/sprite.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 0, 0, 0);
+        loadShader(m_device, "src/compiled/draw.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
+                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 0, 0, 0);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
 
@@ -28,19 +28,19 @@ void Renderer::init_sprite_pipeline()
     pipelineInfo.target_info.num_color_targets         = 1;
     pipelineInfo.target_info.color_target_descriptions = &colorTargetDescriptions;
 
-    m_spritePipeline = SDL_CreateGPUGraphicsPipeline(m_device, &pipelineInfo);
+    m_drawPipeline = SDL_CreateGPUGraphicsPipeline(m_device, &pipelineInfo);
 
     SDL_ReleaseGPUShader(m_device, fragmentShader);
     SDL_ReleaseGPUShader(m_device, vertexShader);
 }
 
-void Renderer::init_render_pipeline()
+void Renderer::init_blit_pipeline()
 {
     SDL_GPUShader *vertexShader =
-        loadShader(m_device, "src/compiled/screen.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
+        loadShader(m_device, "src/compiled/blit.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
                    SDL_GPU_SHADERFORMAT_SPIRV, 0, 0, 0, 1);
     SDL_GPUShader *fragmentShader =
-        loadShader(m_device, "src/compiled/screen.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
+        loadShader(m_device, "src/compiled/blit.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
                    SDL_GPU_SHADERFORMAT_SPIRV, 1, 0, 0, 1);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
@@ -61,13 +61,13 @@ void Renderer::init_render_pipeline()
     pipelineInfo.target_info.num_color_targets         = 1;
     pipelineInfo.target_info.color_target_descriptions = &colorTargetDescriptions;
 
-    m_renderPipeline = SDL_CreateGPUGraphicsPipeline(m_device, &pipelineInfo);
+    m_blitPipeline = SDL_CreateGPUGraphicsPipeline(m_device, &pipelineInfo);
 
     SDL_ReleaseGPUShader(m_device, fragmentShader);
     SDL_ReleaseGPUShader(m_device, vertexShader);
 }
 
-void Renderer::init_texture()
+void Renderer::init_draw_texture()
 {
     SDL_GPUTextureCreateInfo textureInfo{};
     textureInfo.format               = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
@@ -86,17 +86,4 @@ void Renderer::init_texture()
     samplerInfo.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
     samplerInfo.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
     m_sampler                  = SDL_CreateGPUSampler(m_device, &samplerInfo);
-}
-
-void Renderer::init_sprites_buffer()
-{
-    SDL_GPUBufferCreateInfo bufferInfo{};
-    bufferInfo.size  = sizeof(Sprite) * m_maxSprites;
-    bufferInfo.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-    m_spriteBuffer   = SDL_CreateGPUBuffer(m_device, &bufferInfo);
-
-    SDL_GPUTransferBufferCreateInfo transferInfo{};
-    transferInfo.size      = sizeof(Sprite) * m_maxSprites;
-    transferInfo.usage     = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-    m_spriteTransferBuffer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
 }

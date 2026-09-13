@@ -10,7 +10,7 @@ void Renderer::draw_blit_to_swapchain_texture(SDL_GPUCommandBuffer *commandBuffe
     colorTargetInfo.texture     = swapchainTexture;
 
     SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
-    SDL_BindGPUGraphicsPipeline(renderPass, m_renderPipeline);
+    SDL_BindGPUGraphicsPipeline(renderPass, m_blitPipeline);
 
     SDL_GPUTextureSamplerBinding textureBinding;
     textureBinding.texture = m_drawTexture;
