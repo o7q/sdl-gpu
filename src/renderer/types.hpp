@@ -1,7 +1,16 @@
 #pragma once
 
 #include <px/math/vec.hpp>
+#include <string>
 #include <variant>
+
+struct TextureDrawInfo
+{
+    std::string name = "";
+    px::Vec2f position;
+    px::Vec2f size;
+    float angle;
+};
 
 struct RectangleDrawInfo
 {
@@ -17,7 +26,7 @@ struct EllipseDrawInfo
     float angle;
 };
 
-using DrawInfoType = std::variant<RectangleDrawInfo, EllipseDrawInfo>;
+using DrawInfoType = std::variant<TextureDrawInfo, RectangleDrawInfo, EllipseDrawInfo>;
 
 struct DrawInfo
 {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "atlas.hpp"
 #include "types.hpp"
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_init.h>
@@ -10,6 +11,7 @@
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <cstring>
+#include <px/graphics/texture.hpp>
 #include <px/math/vec.hpp>
 #include <vector>
 
@@ -18,6 +20,9 @@ class Renderer
   private:
     struct TextureObject
     {
+        px::Vec2f uvPos;
+        px::Vec2f uvSize;
+
         px::Vec2f position;
         px::Vec2f size;
         float angle;
@@ -42,8 +47,9 @@ class Renderer
 
     struct DrawObject
     {
-        // 0: rectangle
-        // 1: ellipse
+        // 0: texture
+        // 1: rectangle
+        // 2: ellipse
         // used to determine which object buffer to read from
         int objectType;
         // index into the object buffer
@@ -58,25 +64,17 @@ class Renderer
     };
 
   public:
-    Renderer(Uint32 width, Uint32 height)
+    Renderer(Uint32 width, Uint32 height) : m_atlas(m_device)
     {
         m_width  = width;
         m_height = height;
 
         init();
-
-        // SDL_GPUTransferBufferCreateInfo transferInfo{};
-        // transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-        // transferInfo.size = 0;
-        // SDL_GPUTransferBuffer* transfer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
-
-        // SDL_GPUTextureTransferInfo info{};
-        // info.transfer_buffer = transfer;
-        // SDL_Bind
     }
     ~Renderer()
     {
         free_object_buffer(&m_objectBuffer);
+        free_object_buffer(&m_textureBuffer);
         free_object_buffer(&m_rectangleBuffer);
         free_object_buffer(&m_ellipseBuffer);
 
@@ -93,6 +91,7 @@ class Renderer
     }
 
     void draw(std::vector<DrawInfo> &queue);
+    TextureAtlas &atlas() { return m_atlas; }
 
   private:
     void draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuffer *commandBuffer);
@@ -101,40 +100,6 @@ class Renderer
                                         Uint32 width, Uint32 height);
 
     void init();
-
-    void init_atlas(SDL_Surface *atlas)
-    {
-        SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
-        SDL_GPUCopyPass *copyPass           = SDL_BeginGPUCopyPass(commandBuffer);
-
-        SDL_GPUTextureCreateInfo textureInfo{};
-        textureInfo.format               = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-        textureInfo.width                = (Uint32)atlas->w;
-        textureInfo.height               = (Uint32)atlas->h;
-        textureInfo.num_levels           = 1;
-        textureInfo.layer_count_or_depth = 1;
-        textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_SAMPLER;
-        m_atlasTexture                   = SDL_CreateGPUTexture(m_device, &textureInfo);
-
-        SDL_GPUTransferBufferCreateInfo transferInfo{};
-        transferInfo.size                     = (Uint32)atlas->w * (Uint32)atlas->h * 4 * sizeof(Uint8);
-        transferInfo.usage                    = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-        SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
-
-        SDL_GPUTextureTransferInfo source{};
-        source.transfer_buffer = transferBuffer;
-
-        SDL_GPUTextureRegion dest{};
-        dest.texture = m_atlasTexture;
-        dest.w = (Uint32)atlas->w;
-        dest.h = (Uint32)atlas->h;
-        dest.d = 1;
-
-        SDL_UploadToGPUTexture(copyPass, &source, &dest, false);
-
-        SDL_EndGPUCopyPass(copyPass);
-        SDL_SubmitGPUCommandBuffer(commandBuffer);
-    }
 
     void init_draw_pipeline();
     void init_blit_pipeline();
@@ -145,6 +110,8 @@ class Renderer
     void free_object_buffer(ObjectBuffer *buffer);
 
   private:
+    TextureAtlas m_atlas;
+
     SDL_Window *m_window    = nullptr;
     SDL_GPUDevice *m_device = nullptr;
 
@@ -155,10 +122,9 @@ class Renderer
     SDL_GPUTexture *m_drawTexture = nullptr;
     SDL_GPUSampler *m_sampler     = nullptr;
 
-    SDL_GPUTexture *m_atlasTexture = nullptr;
-
     Uint32 m_maxBufferSize = 10000;
     ObjectBuffer m_objectBuffer;
+    ObjectBuffer m_textureBuffer;
     ObjectBuffer m_rectangleBuffer;
     ObjectBuffer m_ellipseBuffer;
 };

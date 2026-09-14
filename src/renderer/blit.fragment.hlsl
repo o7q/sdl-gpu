@@ -1,4 +1,4 @@
-Texture2D<float4> swapchainTextue : register(t0, space2);
+Texture2D<float4> swapchainTexture : register(t0, space2);
 SamplerState swapchainSampler : register(s0, space2);
 
 cbuffer Uniforms : register(b0, space3)
@@ -18,31 +18,31 @@ float2 screenToNormal(float2 screenPos)
 
 float4 main(float2 uv : TEXCOORD0) : SV_Target0
 {
-    // int radius = 10;
+    int radius = 10;
 
-    // int count = 0;
-    // float3 sum = float3(0, 0, 0);
+    int count = 0;
+    float3 sum = float3(0, 0, 0);
 
-    // for (int y = -radius; y < radius; ++y)
-    // {
-    //     for (int x = -radius; x < radius; ++x)
-    //     {
-    //         if (x * x + y * y > radius * radius)
-    //         {
-    //             continue;
-    //         }
+    for (int y = -radius; y < radius; ++y)
+    {
+        for (int x = -radius; x < radius; ++x)
+        {
+            if (x * x + y * y > radius * radius)
+            {
+                continue;
+            }
 
-    //         float2 current = normalToScreen(TexCoord) + float2(x, y);
+            float2 current = normalToScreen(uv) + float2(x, y);
 
-    //         float4 color = Texture.Sample(Sampler, screenToNormal(current));
-    //         sum += color.xyz;
-    //         ++count;
-    //     }
-    // }
+            float4 color = swapchainTexture.Sample(swapchainSampler, screenToNormal(current));
+            sum += color.xyz;
+            ++count;
+        }
+    }
 
-    // sum /= (float)count;
+    sum /= (float)count;
 
-    float4 color = swapchainTextue.Sample(swapchainSampler, uv);
+    float4 color = swapchainTexture.Sample(swapchainSampler, uv);
     // color = float4(color.xyz + sum, color.w);
 
 	return color;

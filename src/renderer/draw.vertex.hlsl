@@ -9,6 +9,18 @@ struct Output
 	float4 position : SV_POSITION;
 	int objectType : TEXCOORD0;
 	float2 uv : TEXCOORD1;
+	float2 uvPos : TEXCOORD2;
+	float2 uvSize : TEXCOORD3;
+};
+
+struct TextureObject
+{
+	float2 uvPos;
+	float2 uvSize;
+    float2 position;
+    float2 size;
+    float angle;
+    float _pad[3];
 };
 
 struct RectangleObject
@@ -29,18 +41,15 @@ struct EllipseObject
 
 struct DrawObject
 {
-    // 0: rectangle
-    // 1: ellipse
-    // used to determine which object buffer to read from
     int objectType;
-    // index into the object buffer
     int index;
     int2 _pad;
 };
 
 StructuredBuffer<DrawObject> objectBuffer : register(t0, space0);
-StructuredBuffer<RectangleObject> rectangleBuffer : register(t1, space0);
-StructuredBuffer<EllipseObject> ellipseBuffer : register(t2, space0);
+StructuredBuffer<TextureObject> textureBuffer : register(t1, space0);
+StructuredBuffer<RectangleObject> rectangleBuffer : register(t2, space0);
+StructuredBuffer<EllipseObject> ellipseBuffer : register(t3, space0);
 
 cbuffer Uniforms : register(b0, space1)
 {
@@ -57,36 +66,18 @@ float2 screenToNormal(float2 screenPos)
 	return screenPos / screenSize * 2.0f - 1.0f;
 }
 
-float2 handleRectangle(RectangleObject rectangle, float2 vert)
+float2 handleStandardTransform(float2 position, float2 size, float angle, float2 vert)
 {
-	vert *= rectangle.size / screenSize;
+	vert *= size / screenSize;
 	vert -= 1.0f;
 
 	vert = normalToScreen(vert);
 
-	float newX = vert.x * cos(rectangle.angle) - vert.y * sin(rectangle.angle);
-	float newY = vert.x * sin(rectangle.angle) + vert.y * cos(rectangle.angle);
+	float newX = vert.x * cos(angle) - vert.y * sin(angle);
+	float newY = vert.x * sin(angle) + vert.y * cos(angle);
 	vert = float2(newX, newY);
 
-	vert += rectangle.position;
-
-	vert = screenToNormal(vert);
-
-	return vert;
-}
-
-float2 handleEllipse(EllipseObject ellipse, float2 vert)
-{
-	vert *= ellipse.size / screenSize;
-	vert -= 1.0f;
-
-	vert = normalToScreen(vert);
-
-	float newX = vert.x * cos(ellipse.angle) - vert.y * sin(ellipse.angle);
-	float newY = vert.x * sin(ellipse.angle) + vert.y * cos(ellipse.angle);
-	vert = float2(newX, newY);
-
-	vert += ellipse.position;
+	vert += position;
 
 	vert = screenToNormal(vert);
 
@@ -107,14 +98,22 @@ Output main(Input input)
 	{
 		case 0:
 		{
-			RectangleObject rect = rectangleBuffer[object.index];
-			vert = handleRectangle(rect, vert);
+			TextureObject tex = textureBuffer[object.index];
+			vert = handleStandardTransform(tex.position, tex.size, tex.angle, vert);
+			output.uvPos = tex.uvPos;
+			output.uvSize = tex.uvSize;
 		}
 		break;
 		case 1:
 		{
+			RectangleObject rect = rectangleBuffer[object.index];
+			vert = handleStandardTransform(rect.position, rect.size, rect.angle, vert);
+		}
+		break;
+		case 2:
+		{
 			EllipseObject ellipse = ellipseBuffer[object.index];
-			vert = handleEllipse(ellipse, vert);
+			vert = handleStandardTransform(ellipse.position, ellipse.size, ellipse.angle, vert);
 		}
 		break;
 	}
