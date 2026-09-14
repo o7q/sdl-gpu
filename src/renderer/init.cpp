@@ -12,13 +12,6 @@ void Renderer::init()
         return;
     }
 
-    m_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr);
-    if (!m_device)
-    {
-        std::cout << "Failed to create device!" << std::endl;
-        return;
-    }
-
     if (!SDL_ClaimWindowForGPUDevice(m_device, m_window))
     {
         std::cout << "Error claiming window!" << std::endl;
@@ -32,26 +25,16 @@ void Renderer::init()
     init_blit_pipeline();
 
     init_draw_texture();
-
-    SDL_GPUBufferCreateInfo bufferInfo{};
-    bufferInfo.size  = sizeof(DrawObject) * m_maxObjects;
-    bufferInfo.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-    m_objectBuffer   = SDL_CreateGPUBuffer(m_device, &bufferInfo);
-
-    SDL_GPUTransferBufferCreateInfo transferInfo{};
-    transferInfo.size      = sizeof(DrawObject) * m_maxObjects;
-    transferInfo.usage     = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-    m_objectTransferBuffer = SDL_CreateGPUTransferBuffer(m_device, &transferInfo);
 }
 
 void Renderer::init_draw_pipeline()
 {
     SDL_GPUShader *vertexShader =
         loadShader(m_device, "src/renderer/compiled/draw.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 1, 0, 1);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 4, 0, 1);
     SDL_GPUShader *fragmentShader =
         loadShader(m_device, "src/renderer/compiled/draw.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 1, 0, 0);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 4, 0, 0);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
 

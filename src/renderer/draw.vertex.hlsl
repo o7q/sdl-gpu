@@ -1,42 +1,39 @@
 struct TextureObject
 {
-	float2 atlasPositionNormal;
-	float2 atlasSizeNormal;
-
-	float2 position;
-	float2 size;
-	float2 origin;
-	float angle;
-	float2 cropTopLeft;
-	float2 cropBottomRight;
+    float2 atlasPositionNormal;
+    float2 atlasSizeNormal;
+    float2 position;
+    float2 size;
+    float2 origin;
+    float angle;
+    float2 cropTopLeft;
+    float2 cropBottomRight;
 };
 
 struct RectangleObject
 {
-	float2 position;
-	float2 size;
-	float2 origin;
-	float angle;
-	float4 color;
+    float2 position;
+    float2 size;
+    float2 origin;
+    float angle;
+    float4 color;
 };
 
 struct EllipseObject
 {
-	float2 position;
-	float2 size;
-	float2 origin;
-	float angle;
-	float4 color;
+    float2 position;
+    float2 size;
+    float2 origin;
+    float angle;
+    float4 color;
 };
 
 struct DrawObject
 {
-	int type;
-	TextureObject texture;
-	RectangleObject rectangle;
-	EllipseObject ellipse;
-	float opacity;
-	int filter;
+    int type;
+    int index;
+    float opacity;
+    int filter;
 };
 
 struct Input
@@ -53,6 +50,9 @@ struct Output
 };
 
 StructuredBuffer<DrawObject> objectBuffer : register(t0, space0);
+StructuredBuffer<TextureObject> textureBuffer : register(t1, space0);
+StructuredBuffer<RectangleObject> rectangleBuffer : register(t2, space0);
+StructuredBuffer<EllipseObject> ellipseBuffer : register(t3, space0);
 
 cbuffer Uniforms : register(b0, space1)
 {
@@ -102,19 +102,19 @@ Output main(Input input)
 	{
 		case 0:
 		{
-			TextureObject tex = object.texture;
+			TextureObject tex = textureBuffer[object.index];
 			vert = handleStandardTransform(tex.position, tex.size, tex.origin, tex.angle, vert);
 		}
 		break;
 		case 1:
 		{
-			RectangleObject rect = object.rectangle;
+			RectangleObject rect = rectangleBuffer[object.index];
 			vert = handleStandardTransform(rect.position, rect.size, rect.origin, rect.angle, vert);
 		}
 		break;
 		case 2:
 		{
-			EllipseObject ellipse = object.ellipse;
+			EllipseObject ellipse = ellipseBuffer[object.index];
 			vert = handleStandardTransform(ellipse.position, ellipse.size, ellipse.origin, ellipse.angle, vert);
 		}
 		break;

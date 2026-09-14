@@ -5,7 +5,9 @@
 #include <SDL3/SDL_surface.h>
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 #include <px/graphics/texture.hpp>
+#include <px/log.hpp>
 #include <px/math/vec.hpp>
 #include <unordered_map>
 #include <vector>
@@ -22,11 +24,11 @@ struct AtlasUVIndex
     px::Vec2f size;
 };
 
-class TextureAtlas
+class GPUTextureAtlas
 {
   public:
-    TextureAtlas(SDL_GPUDevice *&device) : r_device(device) {}
-    ~TextureAtlas() { SDL_ReleaseGPUTexture(r_device, m_atlasGPUTexture); }
+    GPUTextureAtlas(SDL_GPUDevice *device) : p_device(device) {}
+    ~GPUTextureAtlas() { SDL_ReleaseGPUTexture(p_device, m_atlasGPUTexture); }
 
     void uploadTextures(std::vector<IndexedTexture> &textures)
     {
@@ -39,7 +41,12 @@ class TextureAtlas
     AtlasUVIndex getIndex(uint64_t id) const
     {
         auto it = m_indices.find(id);
-        return it != m_indices.end() ? it->second : AtlasUVIndex{};
+        if (it == m_indices.end())
+        {
+            px::log::error("px::GPUTextureAtlas", "Error getting UV index! Invalid ID: ", id);
+            return {};
+        }
+        return it->second;
     }
 
   private:
@@ -105,7 +112,7 @@ class TextureAtlas
     {
         px::Vec2u size = m_atlasTexture.getSize();
 
-        SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(r_device);
+        SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(p_device);
         SDL_GPUCopyPass *copyPass           = SDL_BeginGPUCopyPass(commandBuffer);
 
         SDL_GPUTextureCreateInfo textureInfo{};
@@ -116,16 +123,16 @@ class TextureAtlas
         textureInfo.num_levels           = 1;
         textureInfo.layer_count_or_depth = 1;
         textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_SAMPLER;
-        m_atlasGPUTexture                = SDL_CreateGPUTexture(r_device, &textureInfo);
+        m_atlasGPUTexture                = SDL_CreateGPUTexture(p_device, &textureInfo);
 
         size_t bytes = (size_t)size.x * (size_t)size.y * 4;
 
         SDL_GPUTransferBufferCreateInfo transferInfo{};
         transferInfo.size                     = (Uint32)bytes;
         transferInfo.usage                    = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-        SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(r_device, &transferInfo);
+        SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(p_device, &transferInfo);
 
-        Uint8 *data = (Uint8 *)SDL_MapGPUTransferBuffer(r_device, transferBuffer, false);
+        Uint8 *data = (Uint8 *)SDL_MapGPUTransferBuffer(p_device, transferBuffer, false);
         std::memcpy(data, reinterpret_cast<Uint8 *>(m_atlasTexture.getPixels().data()), bytes);
 
         SDL_GPUTextureTransferInfo source{};
@@ -145,7 +152,7 @@ class TextureAtlas
     }
 
   private:
-    SDL_GPUDevice *&r_device;
+    SDL_GPUDevice *p_device;
     SDL_GPUTexture *m_atlasGPUTexture = nullptr;
     px::Texture m_atlasTexture;
 

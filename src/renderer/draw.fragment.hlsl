@@ -2,7 +2,6 @@ struct TextureObject
 {
     float2 atlasPositionNormal;
     float2 atlasSizeNormal;
-
     float2 position;
     float2 size;
     float2 origin;
@@ -32,9 +31,7 @@ struct EllipseObject
 struct DrawObject
 {
     int type;
-    TextureObject texture;
-    RectangleObject rectangle;
-    EllipseObject ellipse;
+    int index;
     float opacity;
     int filter;
 };
@@ -49,32 +46,39 @@ Texture2D<float4> atlasTexture : register(t0, space2);
 SamplerState atlasSampler : register(s0, space2);
 
 StructuredBuffer<DrawObject> objectBuffer : register(t1, space2);
+StructuredBuffer<TextureObject> textureBuffer : register(t2, space2);
+StructuredBuffer<RectangleObject> rectangleBuffer : register(t3, space2);
+StructuredBuffer<EllipseObject> ellipseBuffer : register(t4, space2);
 
 float4 main(Input input) : SV_TARGET
 {
     float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
-
     DrawObject object = objectBuffer[input.objectIndex];
 
     switch (object.type)
     {
         case 0:
         {
-            if (input.uv.x >= object.texture.cropTopLeft.x && input.uv.x <= 1.0f - object.texture.cropBottomRight.x &&
-            input.uv.y >= object.texture.cropTopLeft.y && input.uv.y <= 1.0f - object.texture.cropBottomRight.y)
+            TextureObject tex = textureBuffer[object.index];
+
+            if (input.uv.x >= tex.cropTopLeft.x && input.uv.x <= 1.0f - tex.cropBottomRight.x &&
+            input.uv.y >= tex.cropTopLeft.y && input.uv.y <= 1.0f - tex.cropBottomRight.y)
             {   
-                float2 uv = object.texture.atlasPositionNormal + input.uv * object.texture.atlasSizeNormal;
+                float2 uv = tex.atlasPositionNormal + input.uv * tex.atlasSizeNormal;
                 color = atlasTexture.Sample(atlasSampler, uv);
             }
         }
         break;
         case 1:
         {
-            color = object.rectangle.color;
+            RectangleObject rect = rectangleBuffer[object.index];
+            color = rect.color;
         }
         break;
         case 2:
         {
+            EllipseObject ellipse = ellipseBuffer[object.index];
+
             float2 uv = input.uv - 0.5f;
 
             if (uv.x * uv.x + uv.y * uv.y < 0.25f)
@@ -88,10 +92,10 @@ float4 main(Input input) : SV_TARGET
     switch (object.filter)
     {
         case 1:
-            color.r = 1.0f - color.r;
-            color.g = 1.0f - color.g;
-            color.b = 1.0f - color.b;
-            break;
+        color.r = 1.0f - color.r;
+        color.g = 1.0f - color.g;
+        color.b = 1.0f - color.b;
+        break;
     }
 
     color.w *= object.opacity;

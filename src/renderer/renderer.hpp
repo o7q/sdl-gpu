@@ -12,59 +12,21 @@
 #include <SDL3/SDL_video.h>
 #include <px/graphics/texture.hpp>
 #include <px/math/vec.hpp>
+#include <renderer/object_buffer.hpp>
 #include <vector>
+
+inline SDL_GPUDevice *stageGPUDevice()
+{
+    return SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr);
+}
 
 class Renderer
 {
-  private:
-    struct TextureObject
-    {
-        float atlasPositionNormal[2];
-        float atlasSizeNormal[2];
-        float position[2];
-        float size[2];
-        float origin[2];
-        float angle;
-        float _pad0;
-        float cropTopLeft[2];
-        float cropBottomRight[2];
-    };
-
-    struct RectangleObject
-    {
-        float position[2];
-        float size[2];
-        float origin[2];
-        float angle;
-        float _pad0;
-        float color[4];
-    };
-
-    struct EllipseObject
-    {
-        float position[2];
-        float size[2];
-        float origin[2];
-        float angle;
-        float _pad0;
-        float color[4];
-    };
-
-    struct DrawObject
-    {
-        int type;
-        float _pad0;
-        TextureObject texture;
-        float _pad1[2];
-        RectangleObject rectangle;
-        EllipseObject ellipse;
-        float opacity;
-        int filter;
-        float _pad2[2];
-    };
-
   public:
-    Renderer(Uint32 width, Uint32 height) : m_atlas(m_device)
+    Renderer(Uint32 width, Uint32 height)
+        : m_device(stageGPUDevice()), m_atlas(m_device), m_objectBuffer(m_device, m_maxObjects),
+          m_textureBuffer(m_device, m_maxObjects), m_rectangleBuffer(m_device, m_maxObjects),
+          m_ellipseBuffer(m_device, m_maxObjects)
     {
         m_width  = width;
         m_height = height;
@@ -73,9 +35,6 @@ class Renderer
     }
     ~Renderer()
     {
-        SDL_ReleaseGPUBuffer(m_device, m_objectBuffer);
-        SDL_ReleaseGPUTransferBuffer(m_device, m_objectTransferBuffer);
-
         SDL_ReleaseGPUGraphicsPipeline(m_device, m_drawPipeline);
         SDL_ReleaseGPUGraphicsPipeline(m_device, m_blitPipeline);
 
@@ -89,7 +48,7 @@ class Renderer
     }
 
     void draw(std::vector<DrawInfo> &queue);
-    TextureAtlas &atlas() { return m_atlas; }
+    GPUTextureAtlas &atlas() { return m_atlas; }
 
   private:
     void draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuffer *commandBuffer);
@@ -104,10 +63,8 @@ class Renderer
     void init_draw_texture();
 
   private:
-    TextureAtlas m_atlas;
-
-    SDL_Window *m_window    = nullptr;
     SDL_GPUDevice *m_device = nullptr;
+    SDL_Window *m_window    = nullptr;
 
     SDL_GPUGraphicsPipeline *m_drawPipeline = nullptr;
     SDL_GPUGraphicsPipeline *m_blitPipeline = nullptr;
@@ -116,7 +73,10 @@ class Renderer
     SDL_GPUTexture *m_drawTexture = nullptr;
     SDL_GPUSampler *m_sampler     = nullptr;
 
-    Uint32 m_maxObjects                           = 100000;
-    SDL_GPUBuffer *m_objectBuffer                 = nullptr;
-    SDL_GPUTransferBuffer *m_objectTransferBuffer = nullptr;
+    GPUTextureAtlas m_atlas;
+    Uint32 m_maxObjects = 100000;
+    ObjectBuffer<GPUDrawObject> m_objectBuffer;
+    ObjectBuffer<GPUTextureObject> m_textureBuffer;
+    ObjectBuffer<GPURectangleObject> m_rectangleBuffer;
+    ObjectBuffer<GPUEllipseObject> m_ellipseBuffer;
 };
