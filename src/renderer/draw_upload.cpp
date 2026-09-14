@@ -16,7 +16,7 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
     {
         std::visit(overloaded{[this, &objects](const TextureDrawInfo &info_)
                               {
-                                  AtlasUVIndex index = m_atlas.getIndex(info_.name);
+                                  AtlasUVIndex index = m_atlas.getIndex(info_.id);
 
                                   DrawObject object;
                                   object.type             = 0;

@@ -1,11 +1,16 @@
 #include "renderer.hpp"
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_timer.h>
+#include <px/log.hpp>
 
 void Renderer::draw(std::vector<DrawInfo> &queue)
 {
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
-    draw_upload_queue(queue, commandBuffer);
+
+    if (queue.size() <= m_maxObjects)
+    {
+        draw_upload_queue(queue, commandBuffer);
+    }
 
     draw_to_offscreen_texture(commandBuffer, (Uint32)queue.size());
 

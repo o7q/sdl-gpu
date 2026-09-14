@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <iostream>
 #include <px/graphics/texture.hpp>
+#include <renderer/atlas.hpp>
 #include <renderer/renderer.hpp>
 #include <renderer/types.hpp>
 #include <vector>
@@ -13,12 +14,12 @@ int main()
 
     Renderer renderer({1920, 1080});
 
-    std::vector<NamedTexture> textures;
+    std::vector<IndexedTexture> textures;
 
-    textures.push_back({"bedcat", {"src/images/bedcat.png"}});
-    textures.push_back({"green", {"src/images/green shart.png"}});
-    textures.push_back({"sparkle", {"src/images/sparklecat.png"}});
-    textures.push_back({"squisher", {"src/images/squisher4.png"}});
+    textures.push_back({0, {"src/images/bedcat.png"}});
+    textures.push_back({1, {"src/images/green shart.png"}});
+    textures.push_back({2, {"src/images/sparklecat.png"}});
+    textures.push_back({3, {"src/images/squisher4.png"}});
 
     renderer.atlas().uploadTextures(textures);
     renderer.atlas().getTexture().saveToFile("src/atlas.png");
@@ -43,9 +44,9 @@ int main()
             // tex.angle    = rotation;
             // queue.push_back({0, tex});
             TextureDrawInfo tex;
-            tex.name     = "sparkle";
-            tex.position = {x * 50.0f, y * 50.0f};
-            tex.size     = {50, 50};
+            tex.id       = 1;
+            tex.position = {x * 100.0f, y * 100.0f};
+            tex.size     = {100, 100};
             tex.angle    = rotation;
             queue.push_back({0, tex});
         }

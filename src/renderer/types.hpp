@@ -1,12 +1,12 @@
 #pragma once
 
+#include <cstdint>
 #include <px/math/vec.hpp>
-#include <string>
 #include <variant>
 
 struct TextureDrawInfo
 {
-    std::string name = "";
+    uint64_t id;
     px::Vec2f position;
     px::Vec2f size;
     float angle;

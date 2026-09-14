@@ -113,7 +113,7 @@ class Renderer
     SDL_GPUTexture *m_drawTexture = nullptr;
     SDL_GPUSampler *m_sampler     = nullptr;
 
-    Uint32 m_maxObjects                           = 10000;
+    Uint32 m_maxObjects                           = 100000;
     SDL_GPUBuffer *m_objectBuffer                 = nullptr;
     SDL_GPUTransferBuffer *m_objectTransferBuffer = nullptr;
 };
