@@ -37,7 +37,7 @@ class Renderer
     }
     ~Renderer() { destroy(); }
 
-    void draw(std::vector<DrawLayer> &layerQueue);
+    void draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor = {});
     GPUTextureAtlas &atlas() { return m_atlas; }
 
   private:
@@ -84,4 +84,5 @@ class Renderer
     ObjectBuffer<GPUTextureObject> m_textureBuffer;
     ObjectBuffer<GPURectangleObject> m_rectangleBuffer;
     ObjectBuffer<GPUEllipseObject> m_ellipseBuffer;
+    ObjectBuffer<GPULineObject> m_lineBuffer;
 };

@@ -28,6 +28,14 @@ struct EllipseObject
     float4 color;
 };
 
+struct LineObject
+{
+    float2 a;
+    float2 b;
+    float thickness;
+    float4 color;
+};
+
 struct DrawObject
 {
     int type;
@@ -49,9 +57,12 @@ StructuredBuffer<DrawObject> objectBuffer : register(t1, space2);
 StructuredBuffer<TextureObject> textureBuffer : register(t2, space2);
 StructuredBuffer<RectangleObject> rectangleBuffer : register(t3, space2);
 StructuredBuffer<EllipseObject> ellipseBuffer : register(t4, space2);
+StructuredBuffer<LineObject> lineBuffer : register(t5, space2);
 
 float4 main(Input input) : SV_TARGET
 {
+    return float4(1, 0, 0, 1);
+
     float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
     DrawObject object = objectBuffer[input.objectIndex];
 
@@ -85,6 +96,12 @@ float4 main(Input input) : SV_TARGET
             {
                 color = ellipse.color;
             }
+        }
+        break;
+        case 3:
+        {
+            LineObject l = lineBuffer[object.index];
+            color = l.color;
         }
         break;
     }

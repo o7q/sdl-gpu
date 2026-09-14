@@ -27,6 +27,7 @@ void Renderer::destroy_buffers()
     m_textureBuffer.destroy();
     m_rectangleBuffer.destroy();
     m_ellipseBuffer.destroy();
+    m_lineBuffer.destroy();
 }
 void Renderer::destroy_draw_pipeline() { SDL_ReleaseGPUGraphicsPipeline(m_device, m_drawPipeline); }
 void Renderer::destroy_composite_pipeline() { SDL_ReleaseGPUGraphicsPipeline(m_device, m_compositePipeline); }

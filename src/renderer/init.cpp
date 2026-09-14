@@ -50,16 +50,17 @@ void Renderer::init_buffers()
     m_textureBuffer.init(m_device, m_maxObjects);
     m_rectangleBuffer.init(m_device, m_maxObjects);
     m_ellipseBuffer.init(m_device, m_maxObjects);
+    m_lineBuffer.init(m_device, m_maxObjects);
 }
 
 void Renderer::init_draw_pipeline()
 {
     SDL_GPUShader *vertexShader =
         loadShader(m_device, "src/renderer/compiled/draw.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 4, 0, 1);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 5, 0, 1);
     SDL_GPUShader *fragmentShader =
         loadShader(m_device, "src/renderer/compiled/draw.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 4, 0, 0);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 5, 0, 0);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
 

@@ -42,7 +42,16 @@ struct EllipseDrawInfo
     int filter      = 0;
 };
 
-using DrawInfoType = std::variant<TextureDrawInfo, RectangleDrawInfo, EllipseDrawInfo>;
+struct LineDrawInfo
+{
+    px::Vec2f a, b;
+    float thickness = 2.0f;
+    px::Color color = {255, 255, 255, 255};
+    float opacity   = 1.0f;
+    int filter      = 0;
+};
+
+using DrawInfoType = std::variant<TextureDrawInfo, RectangleDrawInfo, EllipseDrawInfo, LineDrawInfo>;
 
 struct DrawInfo
 {
@@ -69,7 +78,7 @@ struct DrawLayer
 {
     int zIndex                   = 0;
     DrawLayerBlendMode blendMode = DrawLayerBlendMode::AlphaOver;
-    std::vector<DrawInfo> queue;
+    std::vector<DrawInfo> sprites;
 };
 
 struct GPUTextureObject
@@ -101,6 +110,15 @@ struct GPUEllipseObject
     float size[2];
     float origin[2];
     float angle;
+    float _pad0;
+    float color[4];
+};
+
+struct GPULineObject
+{
+    float a[2];
+    float b[2];
+    float thickness;
     float _pad0;
     float color[4];
 };

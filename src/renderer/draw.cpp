@@ -4,7 +4,7 @@
 #include <px/log.hpp>
 #include <renderer/types.hpp>
 
-void Renderer::draw(std::vector<DrawLayer> &layerQueue)
+void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor)
 {
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
 
@@ -12,7 +12,9 @@ void Renderer::draw(std::vector<DrawLayer> &layerQueue)
               [](const DrawLayer &a, const DrawLayer &b) { return a.zIndex < b.zIndex; });
 
     SDL_GPUColorTargetInfo colorTargetInfo{};
-    colorTargetInfo.clear_color  = {0.1f, 0.1f, 0.1f, 1.0f};
+    px::Vec4f clearColorNormal   = clearColor.normalize();
+    colorTargetInfo.clear_color  = {clearColorNormal.x, clearColorNormal.y, clearColorNormal.z,
+                                    clearColorNormal.w};
     colorTargetInfo.load_op      = SDL_GPU_LOADOP_CLEAR;
     colorTargetInfo.store_op     = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.texture      = m_drawTextures[0];
@@ -21,11 +23,11 @@ void Renderer::draw(std::vector<DrawLayer> &layerQueue)
 
     for (DrawLayer &layer : layerQueue)
     {
-        if (layer.queue.size() <= m_maxObjects)
+        if (layer.sprites.size() <= m_maxObjects)
         {
-            draw_upload_queue(layer.queue, commandBuffer);
+            draw_upload_queue(layer.sprites, commandBuffer);
         }
-        draw_layer(commandBuffer, (Uint32)layer.queue.size());
+        draw_layer(commandBuffer, (Uint32)layer.sprites.size());
         draw_composite(commandBuffer, layer.blendMode);
     }
 
