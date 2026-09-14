@@ -11,9 +11,8 @@ void Renderer::draw_to_offscreen_texture(SDL_GPUCommandBuffer *commandBuffer, Ui
     SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
     SDL_BindGPUGraphicsPipeline(renderPass, m_drawPipeline);
 
-    SDL_GPUBuffer *buffers[4]{m_objectBuffer.buffer, m_textureBuffer.buffer, m_rectangleBuffer.buffer,
-                              m_ellipseBuffer.buffer};
-    SDL_BindGPUVertexStorageBuffers(renderPass, 0, buffers, 4);
+    SDL_BindGPUVertexStorageBuffers(renderPass, 0, &m_objectBuffer, 1);
+    SDL_BindGPUFragmentStorageBuffers(renderPass, 0, &m_objectBuffer, 1);
 
     float screenSize[2] = {(float)m_width, (float)m_height};
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &screenSize, sizeof(screenSize));

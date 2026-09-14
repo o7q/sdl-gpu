@@ -11,7 +11,7 @@ int main()
 {
     SDL_Init(SDL_INIT_VIDEO);
 
-    Renderer renderer({256*3, 128*3});
+    Renderer renderer({1920, 1080});
 
     std::vector<NamedTexture> textures;
 
@@ -32,25 +32,24 @@ int main()
     {
         std::vector<DrawInfo> queue;
 
-        EllipseDrawInfo circle;
-        circle.position = {50, 50};
-        circle.size     = {30, 10};
-        circle.angle    = 0.0f;
-        queue.push_back({1, circle});
+        for (int i = 0; i < 10000; ++i)
+        {
+            float x = i % 100;
+            float y = i / 100;
 
-        RectangleDrawInfo rect;
-        rect.position = {60, 30};
-        rect.size     = {60, 20};
-        rect.angle    = rotation;
-        queue.push_back({0, rect});
-        rotation += 0.0001f;
-
-        TextureDrawInfo tex;
-        tex.name     = "sparkle";
-        tex.position = {80, 60};
-        tex.size     = {200, 200};
-        tex.angle    = rotation;
-        queue.push_back({0, tex});
+            // EllipseDrawInfo tex;
+            // tex.position = {x * 100.0f, y * 100.0f};
+            // tex.size     = {100, 100};
+            // tex.angle    = rotation;
+            // queue.push_back({0, tex});
+            TextureDrawInfo tex;
+            tex.name     = "sparkle";
+            tex.position = {x * 50.0f, y * 50.0f};
+            tex.size     = {50, 50};
+            tex.angle    = rotation;
+            queue.push_back({0, tex});
+        }
+        rotation += 0.001f;
 
         SDL_Event event;
         while (SDL_PollEvent(&event))

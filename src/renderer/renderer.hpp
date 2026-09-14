@@ -11,6 +11,7 @@
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <cstring>
+#include <iostream>
 #include <px/graphics/texture.hpp>
 #include <px/math/vec.hpp>
 #include <vector>
@@ -47,25 +48,21 @@ class Renderer
 
     struct DrawObject
     {
-        // 0: texture
-        // 1: rectangle
-        // 2: ellipse
         // used to determine which object buffer to read from
-        int objectType;
-        // index into the object buffer
-        int index;
-        int _pad[2];
-    };
-
-    struct ObjectBuffer
-    {
-        SDL_GPUBuffer *buffer           = nullptr;
-        SDL_GPUTransferBuffer *transfer = nullptr;
+        int type;
+        int _pad[3];
+        TextureObject texture;
+        RectangleObject rectangle;
+        EllipseObject ellipse;
     };
 
   public:
     Renderer(Uint32 width, Uint32 height) : m_atlas(m_device)
     {
+        size_t sizes =
+            sizeof(TextureObject) + sizeof(RectangleObject) + sizeof(EllipseObject) + sizeof(DrawObject);
+        std::cout << sizes << std::endl;
+
         m_width  = width;
         m_height = height;
 
@@ -73,10 +70,8 @@ class Renderer
     }
     ~Renderer()
     {
-        free_object_buffer(&m_objectBuffer);
-        free_object_buffer(&m_textureBuffer);
-        free_object_buffer(&m_rectangleBuffer);
-        free_object_buffer(&m_ellipseBuffer);
+        SDL_ReleaseGPUBuffer(m_device, m_objectBuffer);
+        SDL_ReleaseGPUTransferBuffer(m_device, m_objectTransferBuffer);
 
         SDL_ReleaseGPUGraphicsPipeline(m_device, m_drawPipeline);
         SDL_ReleaseGPUGraphicsPipeline(m_device, m_blitPipeline);
@@ -105,10 +100,6 @@ class Renderer
     void init_blit_pipeline();
     void init_draw_texture();
 
-    void upload_object_buffer(SDL_GPUCopyPass *copyPass, ObjectBuffer *buffer, void *data, size_t bytes);
-    void init_object_buffer(ObjectBuffer *buffer, Uint32 bytes);
-    void free_object_buffer(ObjectBuffer *buffer);
-
   private:
     TextureAtlas m_atlas;
 
@@ -122,9 +113,7 @@ class Renderer
     SDL_GPUTexture *m_drawTexture = nullptr;
     SDL_GPUSampler *m_sampler     = nullptr;
 
-    Uint32 m_maxBufferSize = 10000;
-    ObjectBuffer m_objectBuffer;
-    ObjectBuffer m_textureBuffer;
-    ObjectBuffer m_rectangleBuffer;
-    ObjectBuffer m_ellipseBuffer;
+    Uint32 m_maxObjects                           = 10000;
+    SDL_GPUBuffer *m_objectBuffer                 = nullptr;
+    SDL_GPUTransferBuffer *m_objectTransferBuffer = nullptr;
 };

@@ -10,67 +10,62 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
               [](const DrawInfo &a, const DrawInfo &b) { return a.index < b.index; });
 
     std::vector<DrawObject> objects;
-    std::vector<TextureObject> textureObjects;
-    std::vector<RectangleObject> rectObjects;
-    std::vector<EllipseObject> ellipseObjects;
+    objects.reserve(queue.size());
 
-    for (DrawInfo &info : queue)
+    for (const DrawInfo &info : queue)
     {
-        std::visit(overloaded{[this, &objects, &textureObjects](const TextureDrawInfo &info_)
+        std::visit(overloaded{[this, &objects](const TextureDrawInfo &info_)
                               {
                                   AtlasUVIndex index = m_atlas.getIndex(info_.name);
 
                                   DrawObject object;
-                                  object.objectType = 0;
-                                  object.index      = (int)textureObjects.size();
+                                  object.type             = 0;
+                                  object.texture.uvPos    = index.location;
+                                  object.texture.uvSize   = index.size;
+                                  object.texture.position = info_.position;
+                                  object.texture.size     = info_.size;
+                                  object.texture.angle    = info_.angle;
                                   objects.push_back(object);
-
-                                  TextureObject textureObject;
-                                  textureObject.uvPos    = index.location;
-                                  textureObject.uvSize   = index.size;
-                                  textureObject.position = info_.position;
-                                  textureObject.size     = info_.size;
-                                  textureObject.angle    = info_.angle;
-                                  textureObjects.push_back(textureObject);
                               },
-                              [&objects, &rectObjects](const RectangleDrawInfo &info_)
+                              [&objects](const RectangleDrawInfo &info_)
                               {
                                   DrawObject object;
-                                  object.objectType = 1;
-                                  object.index      = (int)rectObjects.size();
+                                  object.type               = 1;
+                                  object.rectangle.position = info_.position;
+                                  object.rectangle.size     = info_.size;
+                                  object.rectangle.angle    = info_.angle;
                                   objects.push_back(object);
-
-                                  RectangleObject rectObject;
-                                  rectObject.position = info_.position;
-                                  rectObject.size     = info_.size;
-                                  rectObject.angle    = info_.angle;
-                                  rectObjects.push_back(rectObject);
                               },
-                              [&objects, &ellipseObjects](const EllipseDrawInfo &info_)
+                              [&objects](const EllipseDrawInfo &info_)
                               {
                                   DrawObject object;
-                                  object.objectType = 2;
-                                  object.index      = (int)ellipseObjects.size();
+                                  object.type             = 2;
+                                  object.ellipse.position = info_.position;
+                                  object.ellipse.size     = info_.size;
+                                  object.ellipse.angle    = info_.angle;
                                   objects.push_back(object);
-
-                                  EllipseObject ellipseObject;
-                                  ellipseObject.position = info_.position;
-                                  ellipseObject.size     = info_.size;
-                                  ellipseObject.angle    = info_.angle;
-                                  ellipseObjects.push_back(ellipseObject);
                               }},
                    info.info);
     }
 
     SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
-    upload_object_buffer(copyPass, &m_objectBuffer, objects.data(), objects.size() * sizeof(DrawObject));
-    upload_object_buffer(copyPass, &m_textureBuffer, textureObjects.data(),
-                         textureObjects.size() * sizeof(TextureObject));
-    upload_object_buffer(copyPass, &m_rectangleBuffer, rectObjects.data(),
-                         rectObjects.size() * sizeof(RectangleObject));
-    upload_object_buffer(copyPass, &m_ellipseBuffer, ellipseObjects.data(),
-                         ellipseObjects.size() * sizeof(EllipseObject));
+    size_t bytes = objects.size() * sizeof(DrawObject);
+
+    void *mapping = SDL_MapGPUTransferBuffer(m_device, m_objectTransferBuffer, true);
+    std::memcpy(mapping, objects.data(), bytes);
+    SDL_UnmapGPUTransferBuffer(m_device, m_objectTransferBuffer);
+
+    SDL_GPUTransferBufferLocation location{};
+    location.transfer_buffer = m_objectTransferBuffer;
+    location.offset          = 0;
+
+    SDL_GPUBufferRegion region{};
+    region.buffer = m_objectBuffer;
+    region.size   = (Uint32)bytes;
+    region.offset = 0;
+
+    SDL_UploadToGPUBuffer(copyPass, &location, &region, true);
 
     SDL_EndGPUCopyPass(copyPass);
 }
