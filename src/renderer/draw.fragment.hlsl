@@ -79,7 +79,7 @@ float4 main(Input input) : SV_TARGET
 
             if (uv.x * uv.x + uv.y * uv.y < 0.25f)
             {
-                color = object.ellipse.color;
+                color = float4(input.uv, 0.0f, 1.0f);
             }
         }
         break;

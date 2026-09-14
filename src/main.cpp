@@ -39,22 +39,23 @@ int main()
             float x = i % 100;
             float y = i / 100;
 
-            // EllipseDrawInfo tex;
-            // tex.position = {x * 100.0f, y * 100.0f};
-            // tex.size     = {100, 100};
-            // tex.angle    = rotation;
-            // tex.color = px::Color(255, 255, 255, 255);
-            // queue.push_back({0, tex});
-            TextureDrawInfo tex;
-            tex.id       = 3;
-            tex.position = {x * 200.0f, y * 200.0f};
-            tex.scale    = {0.3f, 0.3f};
+            EllipseDrawInfo tex;
+            tex.position = {x * 40.0f, y * 40.0f};
+            tex.size     = {40, 40};
             tex.angle    = rotation;
-            tex.opacity  = 1.0f;
-            tex.filter   = 1;
+            tex.color    = px::Color(255, 255, 255, 255);
+            tex.filter = 1;
             queue.push_back({0, tex});
+            // TextureDrawInfo tex;
+            // tex.id       = 3;
+            // tex.position = {x * 200.0f, y * 200.0f};
+            // tex.scale    = {0.3f, 0.3f};
+            // tex.angle    = rotation;
+            // tex.opacity  = 1.0f;
+            // tex.filter   = 1;
+            // queue.push_back({0, tex});
         }
-        rotation = rotation + px::Degrees{0.01f};
+        rotation = rotation + px::Degrees{0.04f};
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
