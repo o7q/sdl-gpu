@@ -18,7 +18,7 @@ struct IndexedTexture
 
 struct AtlasUVIndex
 {
-    px::Vec2f location;
+    px::Vec2f position;
     px::Vec2f size;
 };
 

@@ -1,42 +1,48 @@
 struct TextureObject
 {
-	float2 uvPos;
-	float2 uvSize;
+    float2 atlasPositionNormal;
+    float2 atlasSizeNormal;
+
     float2 position;
     float2 size;
+    float2 origin;
     float angle;
-    float _pad[3];
+    float2 cropTopLeft;
+    float2 cropBottomRight;
 };
 
 struct RectangleObject
 {
     float2 position;
     float2 size;
+    float2 origin;
     float angle;
-    float _pad[3];
+    float4 color;
 };
 
 struct EllipseObject
 {
     float2 position;
     float2 size;
-	float angle;
-    float _pad[3];
+    float2 origin;
+    float angle;
+    float4 color;
 };
 
 struct DrawObject
 {
     int type;
-	int _pad[3];
-	TextureObject texture;
-	RectangleObject rectangle;
-	EllipseObject ellipse;
+    TextureObject texture;
+    RectangleObject rectangle;
+    EllipseObject ellipse;
+    float opacity;
+    int filter;
 };
 
 struct Input
 {
     uint objectIndex : TEXCOORD0;
-	float2 uv : TEXCOORD1;
+    float2 uv : TEXCOORD1;
 };
 
 Texture2D<float4> atlasTexture : register(t0, space2);
@@ -54,12 +60,17 @@ float4 main(Input input) : SV_TARGET
     {
         case 0:
         {
-            return atlasTexture.Sample(atlasSampler, object.texture.uvPos + input.uv * object.texture.uvSize);
+            if (input.uv.x >= object.texture.cropTopLeft.x && input.uv.x <= 1.0f - object.texture.cropBottomRight.x &&
+            input.uv.y >= object.texture.cropTopLeft.y && input.uv.y <= 1.0f - object.texture.cropBottomRight.y)
+            {   
+                float2 uv = object.texture.atlasPositionNormal + input.uv * object.texture.atlasSizeNormal;
+                color = atlasTexture.Sample(atlasSampler, uv);
+            }
         }
         break;
         case 1:
         {
-            color = float4(input.uv, 1.0f, 1.0f);
+            color = object.rectangle.color;
         }
         break;
         case 2:
@@ -68,11 +79,22 @@ float4 main(Input input) : SV_TARGET
 
             if (uv.x * uv.x + uv.y * uv.y < 0.25f)
             {
-                color = float4(input.uv, 1.0f, 1.0f);
+                color = object.ellipse.color;
             }
         }
         break;
     }
+
+    switch (object.filter)
+    {
+        case 1:
+            color.r = 1.0f - color.r;
+            color.g = 1.0f - color.g;
+            color.b = 1.0f - color.b;
+            break;
+    }
+
+    color.w *= object.opacity;
 
     return color;
 }

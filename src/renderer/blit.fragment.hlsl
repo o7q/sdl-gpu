@@ -18,7 +18,7 @@ float2 screenToNormal(float2 screenPos)
 
 float4 main(float2 uv : TEXCOORD0) : SV_Target0
 {
-    int radius = 10;
+    int radius = 20;
 
     int count = 0;
     float3 sum = float3(0, 0, 0);

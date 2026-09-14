@@ -1,36 +1,42 @@
 struct TextureObject
 {
-	float2 uvPos;
-	float2 uvSize;
-    float2 position;
-    float2 size;
-    float angle;
-    float _pad[3];
+	float2 atlasPositionNormal;
+	float2 atlasSizeNormal;
+
+	float2 position;
+	float2 size;
+	float2 origin;
+	float angle;
+	float2 cropTopLeft;
+	float2 cropBottomRight;
 };
 
 struct RectangleObject
 {
-    float2 position;
-    float2 size;
-    float angle;
-    float _pad[3];
+	float2 position;
+	float2 size;
+	float2 origin;
+	float angle;
+	float4 color;
 };
 
 struct EllipseObject
 {
-    float2 position;
-    float2 size;
+	float2 position;
+	float2 size;
+	float2 origin;
 	float angle;
-    float _pad[3];
+	float4 color;
 };
 
 struct DrawObject
 {
-    int type;
-	int _pad[3];
+	int type;
 	TextureObject texture;
 	RectangleObject rectangle;
 	EllipseObject ellipse;
+	float opacity;
+	int filter;
 };
 
 struct Input
@@ -63,12 +69,13 @@ float2 screenToNormal(float2 screenPos)
 	return screenPos / screenSize * 2.0f - 1.0f;
 }
 
-float2 handleStandardTransform(float2 position, float2 size, float angle, float2 vert)
+float2 handleStandardTransform(float2 position, float2 size, float2 origin, float angle, float2 vert)
 {
 	vert *= size / screenSize;
 	vert -= 1.0f;
 
 	vert = normalToScreen(vert);
+	vert += size / 2 - origin;
 
 	float newX = vert.x * cos(angle) - vert.y * sin(angle);
 	float newY = vert.x * sin(angle) + vert.y * cos(angle);
@@ -96,19 +103,19 @@ Output main(Input input)
 		case 0:
 		{
 			TextureObject tex = object.texture;
-			vert = handleStandardTransform(tex.position, tex.size, tex.angle, vert);
+			vert = handleStandardTransform(tex.position, tex.size, tex.origin, tex.angle, vert);
 		}
 		break;
 		case 1:
 		{
 			RectangleObject rect = object.rectangle;
-			vert = handleStandardTransform(rect.position, rect.size, rect.angle, vert);
+			vert = handleStandardTransform(rect.position, rect.size, rect.origin, rect.angle, vert);
 		}
 		break;
 		case 2:
 		{
 			EllipseObject ellipse = object.ellipse;
-			vert = handleStandardTransform(ellipse.position, ellipse.size, ellipse.angle, vert);
+			vert = handleStandardTransform(ellipse.position, ellipse.size, ellipse.origin, ellipse.angle, vert);
 		}
 		break;
 	}

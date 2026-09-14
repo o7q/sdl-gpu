@@ -10,8 +10,6 @@
 #include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
-#include <cstring>
-#include <iostream>
 #include <px/graphics/texture.hpp>
 #include <px/math/vec.hpp>
 #include <vector>
@@ -21,48 +19,53 @@ class Renderer
   private:
     struct TextureObject
     {
-        px::Vec2f uvPos;
-        px::Vec2f uvSize;
-
-        px::Vec2f position;
-        px::Vec2f size;
+        float atlasPositionNormal[2];
+        float atlasSizeNormal[2];
+        float position[2];
+        float size[2];
+        float origin[2];
         float angle;
-        float _pad[3];
+        float _pad0;
+        float cropTopLeft[2];
+        float cropBottomRight[2];
     };
 
     struct RectangleObject
     {
-        px::Vec2f position;
-        px::Vec2f size;
+        float position[2];
+        float size[2];
+        float origin[2];
         float angle;
-        float _pad[3];
+        float _pad0;
+        float color[4];
     };
 
     struct EllipseObject
     {
-        px::Vec2f position;
-        px::Vec2f size;
+        float position[2];
+        float size[2];
+        float origin[2];
         float angle;
-        float _pad[3];
+        float _pad0;
+        float color[4];
     };
 
     struct DrawObject
     {
-        // used to determine which object buffer to read from
         int type;
-        int _pad[3];
+        float _pad0;
         TextureObject texture;
+        float _pad1[2];
         RectangleObject rectangle;
         EllipseObject ellipse;
+        float opacity;
+        int filter;
+        float _pad2[2];
     };
 
   public:
     Renderer(Uint32 width, Uint32 height) : m_atlas(m_device)
     {
-        size_t sizes =
-            sizeof(TextureObject) + sizeof(RectangleObject) + sizeof(EllipseObject) + sizeof(DrawObject);
-        std::cout << sizes << std::endl;
-
         m_width  = width;
         m_height = height;
 

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <iostream>
 #include <px/graphics/texture.hpp>
+#include <px/math/angle.hpp>
 #include <renderer/atlas.hpp>
 #include <renderer/renderer.hpp>
 #include <renderer/types.hpp>
@@ -12,7 +13,7 @@ int main()
 {
     SDL_Init(SDL_INIT_VIDEO);
 
-    Renderer renderer({1920, 1080});
+    Renderer renderer({1920 / 3, 1080 / 3});
 
     std::vector<IndexedTexture> textures;
 
@@ -24,7 +25,7 @@ int main()
     renderer.atlas().uploadTextures(textures);
     renderer.atlas().getTexture().saveToFile("src/atlas.png");
 
-    float rotation = 0.0f;
+    px::Angle rotation;
 
     Uint64 startTicks = SDL_GetTicks();
     int frameCount    = 0;
@@ -33,7 +34,7 @@ int main()
     {
         std::vector<DrawInfo> queue;
 
-        for (int i = 0; i < 10000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             float x = i % 100;
             float y = i / 100;
@@ -42,15 +43,18 @@ int main()
             // tex.position = {x * 100.0f, y * 100.0f};
             // tex.size     = {100, 100};
             // tex.angle    = rotation;
+            // tex.color = px::Color(255, 255, 255, 255);
             // queue.push_back({0, tex});
             TextureDrawInfo tex;
-            tex.id       = 1;
-            tex.position = {x * 100.0f, y * 100.0f};
-            tex.size     = {100, 100};
+            tex.id       = 3;
+            tex.position = {x * 200.0f, y * 200.0f};
+            tex.scale    = {0.3f, 0.3f};
             tex.angle    = rotation;
+            tex.opacity  = 1.0f;
+            tex.filter   = 1;
             queue.push_back({0, tex});
         }
-        rotation += 0.001f;
+        rotation = rotation + px::Degrees{0.01f};
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
