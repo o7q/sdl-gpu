@@ -4,12 +4,12 @@
 #include <string>
 
 inline SDL_GPUShader *loadShader(SDL_GPUDevice *device, const std::string &path, SDL_GPUShaderStage stage,
-                                  SDL_GPUShaderFormat format, Uint32 samplerCount, Uint32 storageBufferCount,
-                                  Uint32 storageTextureCount, Uint32 uniformCount)
+                                 SDL_GPUShaderFormat format, Uint32 samplerCount, Uint32 storageBufferCount,
+                                 Uint32 storageTextureCount, Uint32 uniformCount)
 {
     size_t codeSize;
     void *code = SDL_LoadFile(path.data(), &codeSize);
-    
+
     SDL_GPUShaderCreateInfo info{};
     info.code                 = (Uint8 *)code;
     info.code_size            = codeSize;

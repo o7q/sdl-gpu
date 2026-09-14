@@ -7,7 +7,7 @@
 template <typename T> class ObjectBuffer
 {
   public:
-    ObjectBuffer(SDL_GPUDevice *device, Uint32 maxObjects) : p_device(device)
+    void init(SDL_GPUDevice *device, Uint32 maxObjects)
     {
         Uint32 bytes = maxObjects * sizeof(T);
 
@@ -20,8 +20,10 @@ template <typename T> class ObjectBuffer
         transferInfo.size  = bytes;
         transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
         m_transfer         = SDL_CreateGPUTransferBuffer(device, &transferInfo);
+
+        p_device = device;
     }
-    ~ObjectBuffer()
+    void destroy()
     {
         SDL_ReleaseGPUBuffer(p_device, m_buffer);
         SDL_ReleaseGPUTransferBuffer(p_device, m_transfer);

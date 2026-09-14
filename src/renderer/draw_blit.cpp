@@ -13,15 +13,12 @@ void Renderer::draw_blit_to_swapchain_texture(SDL_GPUCommandBuffer *commandBuffe
     SDL_BindGPUGraphicsPipeline(renderPass, m_blitPipeline);
 
     SDL_GPUTextureSamplerBinding textureBinding;
-    textureBinding.texture = m_drawTexture;
+    textureBinding.texture = m_compositeTexture;
     textureBinding.sampler = m_sampler;
     SDL_BindGPUFragmentSamplers(renderPass, 0, &textureBinding, 1);
 
     float ratios[2]{(float)width / (float)height, (float)m_width / (float)m_height};
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &ratios, sizeof(ratios));
-
-    float size[2]{(float)m_width, (float)m_height};
-    SDL_PushGPUFragmentUniformData(commandBuffer, 0, &size, sizeof(size));
 
     SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
 

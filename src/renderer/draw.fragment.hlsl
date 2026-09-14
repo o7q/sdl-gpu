@@ -83,7 +83,7 @@ float4 main(Input input) : SV_TARGET
 
             if (uv.x * uv.x + uv.y * uv.y < 0.25f)
             {
-                color = float4(input.uv, 0.0f, 1.0f);
+                color = ellipse.color;
             }
         }
         break;
@@ -92,13 +92,15 @@ float4 main(Input input) : SV_TARGET
     switch (object.filter)
     {
         case 1:
-        color.r = 1.0f - color.r;
-        color.g = 1.0f - color.g;
-        color.b = 1.0f - color.b;
+        {
+            color.r = 1.0f - color.r;
+            color.g = 1.0f - color.g;
+            color.b = 1.0f - color.b;
+        }
         break;
     }
 
-    color.w *= object.opacity;
+    color.a *= object.opacity;
 
     return color;
 }

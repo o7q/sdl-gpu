@@ -13,7 +13,7 @@ int main()
 {
     SDL_Init(SDL_INIT_VIDEO);
 
-    Renderer renderer({1920 / 2, 1080 / 2});
+    Renderer renderer({1920, 1080});
 
     std::vector<IndexedTexture> textures;
 
@@ -21,6 +21,7 @@ int main()
     textures.push_back({1, {"src/images/green shart.png"}});
     textures.push_back({2, {"src/images/sparklecat.png"}});
     textures.push_back({3, {"src/images/squisher4.png"}});
+    textures.push_back({4, {"src/images/funniest boy transparent.png"}});
 
     renderer.atlas().uploadTextures(textures);
     renderer.atlas().getTexture().saveToFile("src/atlas.png");
@@ -32,29 +33,65 @@ int main()
     bool running      = true;
     while (running)
     {
-        std::vector<DrawInfo> queue;
+        std::vector<DrawLayer> queue;
+        DrawLayer a, b, c;
 
-        for (int i = 0; i < 10000; ++i)
+        b.zIndex    = 1;
+        b.blendMode = DrawLayerBlendMode::Xor;
+        c.zIndex    = 2;
+        c.blendMode = DrawLayerBlendMode::Or;
+
+        for (int i = 0; i < 1000; ++i)
         {
-            float x = i % 100;
-            float y = i / 100;
-
-            // EllipseDrawInfo tex;
-            // tex.position = {x * 40.0f, y * 40.0f};
-            // tex.size     = {40, 40};
-            // tex.angle    = rotation;
-            // tex.color    = px::Color(255, 255, 255, 255);
-            // tex.filter = 1;
-            // queue.push_back({0, tex});
-            TextureDrawInfo tex;
-            tex.id       = 3;
-            tex.position = {x * 200.0f, y * 200.0f};
-            tex.scale    = {0.3f, 0.3f};
-            tex.angle    = rotation;
-            tex.opacity  = 1.0f;
-            queue.push_back({0, tex});
+            int x = i % 20;
+            int y = i / 20;
+            {
+                TextureDrawInfo tex;
+                tex.id       = 1;
+                tex.position = {x * 100.0f, y * 100.0f};
+                tex.origin   = {0, 0};
+                tex.scale    = {0.1f, 0.1f};
+                a.queue.push_back({0, tex});
+            }
+            {
+                TextureDrawInfo tex;
+                tex.id       = 0;
+                tex.position = {x * 100.0f, y * 100.0f};
+                tex.origin   = {0, 0};
+                tex.scale    = {0.2f, 0.2f};
+                b.queue.push_back({0, tex});
+            }
+            {
+                RectangleDrawInfo tex;
+                tex.position = {x * 100.0f, y * 100.0f};
+                tex.origin   = {0, 0};
+                tex.size     = {30, 30};
+                tex.color    = {255, 0, 0, 255};
+                a.queue.push_back({1, tex});
+            }
+            {
+                EllipseDrawInfo tex;
+                tex.position = {x * 100.0f, y * 100.0f};
+                tex.origin   = {0, 0};
+                tex.size     = {70, 70};
+                tex.color    = {255, 255, 0, 255};
+                b.queue.push_back({1, tex});
+            }
+            // {
+            //     TextureDrawInfo tex;
+            //     tex.id       = 2;
+            //     tex.position = {300, 300};
+            //     tex.scale    = {2, 2};
+            //     tex.opacity  = 0.5f;
+            //     c.queue.push_back({0, tex});
+            // }
         }
-        rotation = rotation + px::Degrees{0.04f};
+
+        queue.push_back(a);
+        queue.push_back(b);
+        queue.push_back(c);
+
+        rotation = rotation + px::Degrees{0.02f};
 
         SDL_Event event;
         while (SDL_PollEvent(&event))

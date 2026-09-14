@@ -6,8 +6,8 @@
 
 void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuffer *commandBuffer)
 {
-    // std::sort(queue.begin(), queue.end(),
-    //           [](const DrawInfo &a, const DrawInfo &b) { return a.index < b.index; });
+    std::sort(queue.begin(), queue.end(),
+              [](const DrawInfo &a, const DrawInfo &b) { return a.zIndex < b.zIndex; });
 
     std::vector<GPUDrawObject> objects;
     objects.reserve(queue.size());
@@ -104,7 +104,7 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
     }
 
     SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
-    
+
     m_objectBuffer.upload(copyPass, objects);
     m_textureBuffer.upload(copyPass, textures);
     m_rectangleBuffer.upload(copyPass, rectangles);

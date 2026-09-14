@@ -5,7 +5,6 @@
 #include <SDL3/SDL_surface.h>
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <px/graphics/texture.hpp>
 #include <px/log.hpp>
 #include <px/math/vec.hpp>
@@ -27,8 +26,8 @@ struct AtlasUVIndex
 class GPUTextureAtlas
 {
   public:
-    GPUTextureAtlas(SDL_GPUDevice *device) : p_device(device) {}
-    ~GPUTextureAtlas() { SDL_ReleaseGPUTexture(p_device, m_atlasGPUTexture); }
+    void init(SDL_GPUDevice *device) { p_device = device; }
+    void destroy() { SDL_ReleaseGPUTexture(p_device, m_atlasGPUTexture); }
 
     void uploadTextures(std::vector<IndexedTexture> &textures)
     {
