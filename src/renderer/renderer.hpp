@@ -1,6 +1,7 @@
 #pragma once
 
 #include "atlas.hpp"
+#include "gpu_types.hpp"
 #include "types.hpp"
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_init.h>
@@ -37,7 +38,7 @@ class Renderer
     }
     ~Renderer() { destroy(); }
 
-    void draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor = {});
+    void draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor = {}, bool dumpSyncedAtlases = false);
     GPUTextureAtlas &atlas() { return m_atlas; }
 
   private:

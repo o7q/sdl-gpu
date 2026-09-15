@@ -20,7 +20,7 @@ void Renderer::destroy_window_and_device()
     SDL_DestroyGPUDevice(m_device);
     SDL_DestroyWindow(m_window);
 }
-void Renderer::destroy_atlas() { m_atlas.destroy(); }
+void Renderer::destroy_atlas() { m_atlas.destroyGPUCache(); }
 void Renderer::destroy_buffers()
 {
     m_objectBuffer.destroy();

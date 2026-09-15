@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 #include <algorithm>
+#include <px/graphics/texture.hpp>
 #include <px/variant_bp.hpp>
 #include <renderer/atlas.hpp>
 #include <renderer/types.hpp>
@@ -22,9 +23,9 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
             px::variant::overloaded{
                 [this, &objects, &textures](const TextureDrawInfo &info_)
                 {
-                    AtlasUVIndex index          = m_atlas.getIndex(info_.id);
-                    px::Vec2f atlasSize         = m_atlas.getTexture().getSize().toFloat();
-                    px::Vec2f textureSize       = index.size * atlasSize;
+                    AtlasUVIndex index = m_atlas.getIndex(info_.id);
+
+                    px::Vec2f textureSize       = index.size * m_atlas.getAtlasSize().toFloat();
                     px::Vec2f textureSizeScaled = textureSize * info_.scale;
 
                     GPUDrawObject object;
@@ -39,6 +40,7 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
                     texture.atlasPositionNormal[1] = index.position.y;
                     texture.atlasSizeNormal[0]     = index.size.x;
                     texture.atlasSizeNormal[1]     = index.size.y;
+                    texture.atlasIndex             = (int)index.atlasIndex;
                     texture.position[0]            = info_.position.x;
                     texture.position[1]            = info_.position.y;
                     texture.size[0]                = textureSizeScaled.x;

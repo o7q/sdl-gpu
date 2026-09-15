@@ -14,18 +14,13 @@ int main()
 {
     SDL_Init(SDL_INIT_VIDEO);
 
-    Renderer renderer({64, 64});
+    Renderer renderer({512, 512});
 
-    std::vector<IndexedTexture> textures;
-
-    textures.push_back({0, {"src/images/bedcat.png"}});
-    textures.push_back({1, {"src/images/green shart.png"}});
-    textures.push_back({2, {"src/images/sparklecat.png"}});
-    textures.push_back({3, {"src/images/squisher4.png"}});
-    textures.push_back({4, {"src/images/funniest boy transparent.png"}});
-
-    renderer.atlas().uploadTextures(textures);
-    renderer.atlas().getTexture().saveToFile("src/atlas.png");
+    uint64_t bedcat      = renderer.atlas().pushTexture({"src/images/bedcat.png"});
+    uint64_t greenShart  = renderer.atlas().pushTexture({"src/images/green shart.png"});
+    uint64_t sparkleCat  = renderer.atlas().pushTexture({"src/images/sparklecat.png"});
+    uint64_t squisher4   = renderer.atlas().pushTexture({"src/images/squisher4.png"});
+    uint64_t funniestBoi = renderer.atlas().pushTexture({"src/images/funniest boy transparent.png"});
 
     Uint64 startTicks = SDL_GetTicks();
     int frameCount    = 0;
@@ -33,21 +28,28 @@ int main()
     while (running)
     {
         std::vector<DrawLayer> queue;
-        DrawLayer layer;
+        {
+            DrawLayer layer;
 
-        // RectangleDrawInfo rect;
-        // rect.size = {4, 4};
-        // layer.sprites.push_back({0, rect});
+            TextureDrawInfo tex;
+            tex.id     = sparkleCat;
+            tex.origin = {0, 0};
+            tex.opacity = 0.8f;
+            layer.sprites.push_back({0, tex});
+            queue.push_back(layer);
+        }
+        {
+            DrawLayer layer;
+            layer.zIndex = 1;
 
-        px::Vec2f offset = {0, 0};
-
-        LineDrawInfo line;
-        line.a         = px::Vec2f{0, 0} + offset;
-        line.b         = px::Vec2f{20, 10} + offset;
-        line.thickness = 1;
-        layer.sprites.push_back({0, line});
-
-        queue.push_back(layer);
+            TextureDrawInfo tex;
+            tex.id     = squisher4;
+            tex.origin = {0, 0};
+            tex.position = {50, 50};
+            tex.opacity = 0.4f;
+            layer.sprites.push_back({0, tex});
+            queue.push_back(layer);
+        }
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -60,7 +62,7 @@ int main()
             }
         }
 
-        renderer.draw(queue, px::Color{255, 0, 0, 100});
+        renderer.draw(queue, px::Color{10, 0, 0, 255}, true);
 
         Uint64 currentTicks = SDL_GetTicks();
         frameCount++;

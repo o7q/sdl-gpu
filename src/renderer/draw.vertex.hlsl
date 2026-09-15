@@ -2,6 +2,7 @@ struct TextureObject
 {
 	float2 atlasPositionNormal;
 	float2 atlasSizeNormal;
+	uint atlasIndex;
 	float2 position;
 	float2 size;
 	float2 origin;

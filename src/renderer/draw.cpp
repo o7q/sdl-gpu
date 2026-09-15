@@ -4,11 +4,15 @@
 #include <px/log.hpp>
 #include <renderer/types.hpp>
 
-void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor)
+void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor, bool dumpSyncedAtlases)
 {
+    std::vector<DrawLayer> queueCopy = layerQueue;
+
+    m_atlas.sync(dumpSyncedAtlases);
+
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
 
-    std::sort(layerQueue.begin(), layerQueue.end(),
+    std::sort(queueCopy.begin(), queueCopy.end(),
               [](const DrawLayer &a, const DrawLayer &b) { return a.zIndex < b.zIndex; });
 
     SDL_GPUColorTargetInfo colorTargetInfo{};
@@ -21,12 +25,13 @@ void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor)
     SDL_GPURenderPass *clearPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
     SDL_EndGPURenderPass(clearPass);
 
-    for (DrawLayer &layer : layerQueue)
+    for (DrawLayer &layer : queueCopy)
     {
-        if (layer.sprites.size() <= m_maxObjects)
+        if (layer.sprites.size() >= m_maxObjects)
         {
-            draw_upload_queue(layer.sprites, commandBuffer);
+            continue;
         }
+        draw_upload_queue(layer.sprites, commandBuffer);
         draw_layer(commandBuffer, (Uint32)layer.sprites.size());
         draw_composite(commandBuffer, layer.blendMode);
     }

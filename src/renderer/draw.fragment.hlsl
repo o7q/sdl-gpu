@@ -2,6 +2,7 @@ struct TextureObject
 {
     float2 atlasPositionNormal;
     float2 atlasSizeNormal;
+    uint atlasIndex;
     float2 position;
     float2 size;
     float2 origin;
@@ -50,7 +51,7 @@ struct Input
     float2 uv : TEXCOORD1;
 };
 
-Texture2D<float4> atlasTexture : register(t0, space2);
+Texture2DArray<float4> atlasTextures : register(t0, space2);
 SamplerState atlasSampler : register(s0, space2);
 
 StructuredBuffer<DrawObject> objectBuffer : register(t1, space2);
@@ -61,8 +62,6 @@ StructuredBuffer<LineObject> lineBuffer : register(t5, space2);
 
 float4 main(Input input) : SV_TARGET
 {
-    return float4(1, 0, 0, 1);
-
     float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
     DrawObject object = objectBuffer[input.objectIndex];
 
@@ -76,7 +75,8 @@ float4 main(Input input) : SV_TARGET
             input.uv.y >= tex.cropTopLeft.y && input.uv.y <= 1.0f - tex.cropBottomRight.y)
             {   
                 float2 uv = tex.atlasPositionNormal + input.uv * tex.atlasSizeNormal;
-                color = atlasTexture.Sample(atlasSampler, uv);
+                float3 uv3 = float3(uv, (float)tex.atlasIndex);
+                color = atlasTextures.Sample(atlasSampler, uv3);
             }
         }
         break;
