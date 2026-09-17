@@ -1,10 +1,12 @@
 #include "renderer.hpp"
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_timer.h>
+#include <iostream>
+#include <px/graphics/color.hpp>
 #include <px/log.hpp>
 #include <renderer/types.hpp>
 
-void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor, bool dumpSyncedAtlases)
+void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::RGBColor clearColor, bool dumpSyncedAtlases)
 {
     std::vector<DrawLayer> queueCopy = layerQueue;
 
@@ -16,7 +18,7 @@ void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor, bo
               [](const DrawLayer &a, const DrawLayer &b) { return a.zIndex < b.zIndex; });
 
     SDL_GPUColorTargetInfo colorTargetInfo{};
-    px::Vec4f clearColorNormal   = clearColor.normalize();
+    px::Vec4f clearColorNormal   = px::Color(clearColor).normalize();
     colorTargetInfo.clear_color  = {clearColorNormal.x, clearColorNormal.y, clearColorNormal.z,
                                     clearColorNormal.w};
     colorTargetInfo.load_op      = SDL_GPU_LOADOP_CLEAR;
@@ -27,7 +29,7 @@ void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor, bo
 
     for (DrawLayer &layer : queueCopy)
     {
-        if (layer.sprites.size() >= m_maxObjects)
+        if (layer.sprites.size() > m_maxObjects)
         {
             continue;
         }

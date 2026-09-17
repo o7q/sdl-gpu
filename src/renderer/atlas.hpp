@@ -64,7 +64,7 @@ class GPUTextureAtlas
     SDL_GPUDevice *p_device;
     SDL_GPUTexture *m_atlasGPUTexture = nullptr;
 
-    px::Vec2u m_atlasSize = {1024, 1024};
+    px::Vec2u m_atlasSize = {512, 512};
     std::unordered_map<uint64_t, AtlasUVIndex> m_indices;
     std::unordered_map<uint64_t, px::Texture> m_textureCache;
     uint64_t m_currentIndex = 1;

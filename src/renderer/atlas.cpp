@@ -2,6 +2,7 @@
 #include <SDL3/SDL_gpu.h>
 #include <cstdint>
 #include <iostream>
+#include <px/graphics/color.hpp>
 #include <px/graphics/texture.hpp>
 #include <utility>
 #include <vector>
@@ -83,8 +84,13 @@ void GPUTextureAtlas::create_atlases(bool dumpAtlasTextures)
                 px::Vec2i pos      = {x, y};
                 px::Vec2i atlasPos = currentPos + pos;
 
-                atlases[atlasIndex].setPixel(atlasPos.toUnsignedInt(),
-                                             textureRef.second->getPixel(pos.toUnsignedInt()));
+                px::Vec4f color_normal = textureRef.second->getPixel(pos.toUnsignedInt()).normalize();
+
+                color_normal.x *= color_normal.w;
+                color_normal.y *= color_normal.w;
+                color_normal.z *= color_normal.w;
+
+                atlases[atlasIndex].setPixel(atlasPos.toUnsignedInt(), color_normal, px::BlendMode::Replace);
             }
         }
 
@@ -154,7 +160,7 @@ void GPUTextureAtlas::upload_to_gpu(const std::vector<px::Texture> &atlases)
     }
 
     SDL_EndGPUCopyPass(copyPass);
-    SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(commandBuffer);
+    SDL_GPUFence *fence = SDL_SubmitGPUCommandBufferAndAcquireFence(commandBuffer);
     SDL_WaitForGPUFences(p_device, true, &fence, 1);
     SDL_ReleaseGPUFence(p_device, fence);
 

@@ -15,27 +15,22 @@ cbuffer Uniforms : register(b0, space3)
     uint layerBlendMode;
 };
 
-float4 alphaOver(float4 a, float4 b)
+float4 alphaOver(float4 bottom, float4 top)
 {
-    float4 color;
-    color.r = lerp(a.r, b.r, b.a);
-    color.g = lerp(a.g, b.g, b.a);
-    color.b = lerp(a.b, b.b, b.a);
-    color.a = lerp(b.a, 1.0f, a.a);
-    return color;
+    float newAlpha = top.a + bottom.a * (1.0f - top.a);
+    float3 newColor = top.rgb + bottom.rgb * (1.0f - top.a);
+    return float4(newColor, newAlpha);
 }
 
 float4 main(Input input) : SV_TARGET
 {
-    float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
-
     input.uv.y = 1.0f - input.uv.y;
 
     float4 color0 = layer0Texture.Sample(layer0Sampler, input.uv);
     float4 color1 = layer1Texture.Sample(layer1Sampler, input.uv);
 
-    float3 color0_rgb = color0.rgb;
-    float3 color1_rgb = color1.rgb;
+    float3 color0_rgb = color0.rgb / color0.a;
+    float3 color1_rgb = color1.rgb / color0.a;
 
     float3 color_min = float3(0, 0, 0);
     float3 color_max = float3(1, 1, 1);
@@ -45,79 +40,68 @@ float4 main(Input input) : SV_TARGET
         // replace
         case 0:
         {
-            color = color1;
+            return color1;
         }
-        break;
         // alpha-over
         case 1:
         {
-            color = alphaOver(color0, color1);
+            return alphaOver(color0, color1);
         }
-        break;
         // add
         case 2:
         {
             float3 composited = clamp(color0_rgb + color1_rgb, color_min, color_max);
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
         // subtract
         case 3:
         {
             float3 composited = clamp(color0_rgb - color1_rgb, color_min, color_max);
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
         // multiply
         case 4:
         {
             float3 composited = clamp(color0_rgb * color1_rgb, color_min, color_max);
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
         // divide
         case 5:
         {
             float3 composited = clamp(color0_rgb / color1_rgb, color_min, color_max);
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
         // and
         case 6:
         {
             float3 composited = (int3(color0_rgb * 255) & int3(color1_rgb * 255)) / 255.0f;
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
         // or
         case 7:
         {
             float3 composited = (int3(color0_rgb * 255) | int3(color1_rgb * 255)) / 255.0f;
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
         // xor
         case 8:
         {
             float3 composited = (int3(color0_rgb * 255) ^ int3(color1_rgb * 255)) / 255.0f;
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
         // lighten
         case 9:
         {
             float3 composited = max(color0_rgb, color1_rgb);
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
         // darken
         case 10:
         {
             float3 composited = min(color0_rgb, color1_rgb);
-            color = alphaOver(color0, float4(composited, color1.a));
+            return alphaOver(color0, float4(composited * color1.a, color1.a));
         }
-        break;
     }
 
-    return color;
+    return color0;
 }

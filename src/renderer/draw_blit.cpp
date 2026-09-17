@@ -4,7 +4,7 @@ void Renderer::draw_blit_to_swapchain_texture(SDL_GPUCommandBuffer *commandBuffe
                                               SDL_GPUTexture *swapchainTexture, Uint32 width, Uint32 height)
 {
     SDL_GPUColorTargetInfo colorTargetInfo{};
-    colorTargetInfo.clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
+    colorTargetInfo.clear_color = {1.0f, 0.0f, 0.0f, 1.0f};
     colorTargetInfo.load_op     = SDL_GPU_LOADOP_CLEAR;
     colorTargetInfo.store_op    = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.texture     = swapchainTexture;

@@ -21,35 +21,49 @@ int main()
     uint64_t sparkleCat  = renderer.atlas().pushTexture({"src/images/sparklecat.png"});
     uint64_t squisher4   = renderer.atlas().pushTexture({"src/images/squisher4.png"});
     uint64_t funniestBoi = renderer.atlas().pushTexture({"src/images/funniest boy transparent.png"});
+    uint64_t fuzzball    = renderer.atlas().pushTexture({"src/images/fuzzball.png"});
 
     Uint64 startTicks = SDL_GetTicks();
     int frameCount    = 0;
     bool running      = true;
+
+    float angle = 0.0f;
+
     while (running)
     {
         std::vector<DrawLayer> queue;
         {
             DrawLayer layer;
+            layer.blendMode = DrawLayerBlendMode::Xor;
 
             TextureDrawInfo tex;
-            tex.id     = sparkleCat;
-            tex.origin = {0, 0};
-            tex.opacity = 0.8f;
+            tex.id       = sparkleCat;
+            tex.position = {0, 0};
+            tex.origin   = {0, 0};
             layer.sprites.push_back({0, tex});
             queue.push_back(layer);
         }
         {
             DrawLayer layer;
-            layer.zIndex = 1;
+            layer.zIndex    = 1;
+            layer.blendMode = DrawLayerBlendMode::Xor;
 
             TextureDrawInfo tex;
-            tex.id     = squisher4;
-            tex.origin = {0, 0};
-            tex.position = {50, 50};
-            tex.opacity = 0.4f;
+            tex.id       = fuzzball;
+            tex.position = px::Vec2f{300, 300} + px::Vec2f{std::cos(angle), std::sin(angle)} * 50.0f;
             layer.sprites.push_back({0, tex});
+
+
+            LineDrawInfo line;
+            line.a = {10, 10};
+            line.b = {500, 500};
+            line.color = {0, 255, 0};
+            line.thickness = 50;
+            layer.sprites.push_back({1, line});
+
             queue.push_back(layer);
         }
+        angle += 0.0007f;
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -62,7 +76,7 @@ int main()
             }
         }
 
-        renderer.draw(queue, px::Color{10, 0, 0, 255}, true);
+        renderer.draw(queue, {0, 255, 255}, true);
 
         Uint64 currentTicks = SDL_GetTicks();
         frameCount++;

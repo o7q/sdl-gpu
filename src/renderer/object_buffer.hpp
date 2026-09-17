@@ -31,7 +31,12 @@ template <typename T> class ObjectBuffer
 
     void upload(SDL_GPUCopyPass *copyPass, const std::vector<T> &objects)
     {
-        Uint32 bytes = objects.size() * sizeof(T);
+        if (objects.empty())
+        {
+            return;
+        }
+
+        Uint32 bytes = (Uint32)(objects.size() * sizeof(T));
 
         void *mapping = SDL_MapGPUTransferBuffer(p_device, m_transfer, true);
         std::memcpy(mapping, objects.data(), bytes);

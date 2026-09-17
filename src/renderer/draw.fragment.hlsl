@@ -2,11 +2,11 @@ struct TextureObject
 {
     float2 atlasPositionNormal;
     float2 atlasSizeNormal;
-    uint atlasIndex;
+    int atlasIndex;
+    float angle;
     float2 position;
     float2 size;
     float2 origin;
-    float angle;
     float2 cropTopLeft;
     float2 cropBottomRight;
 };
@@ -33,8 +33,8 @@ struct LineObject
 {
     float2 a;
     float2 b;
-    float thickness;
     float4 color;
+    float thickness;
 };
 
 struct DrawObject
@@ -62,7 +62,7 @@ StructuredBuffer<LineObject> lineBuffer : register(t5, space2);
 
 float4 main(Input input) : SV_TARGET
 {
-    float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float4 color = float4(0.0f, 0.0f, 0.0f, 1.0f);
     DrawObject object = objectBuffer[input.objectIndex];
 
     switch (object.type)
@@ -109,11 +109,15 @@ float4 main(Input input) : SV_TARGET
     switch (object.filter)
     {
         case 1:
-        {
-            color.r = 1.0f - color.r;
-            color.g = 1.0f - color.g;
-            color.b = 1.0f - color.b;
-        }
+        color.r /= color.a;
+        color.g /= color.a;
+        color.b /= color.a;
+        color.r = 1.0f - color.r;
+        color.g = 1.0f - color.g;
+        color.b = 1.0f - color.b;
+        color.r *= color.a;
+        color.g *= color.a;
+        color.b *= color.a;
         break;
     }
 

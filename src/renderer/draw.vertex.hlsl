@@ -2,11 +2,11 @@ struct TextureObject
 {
 	float2 atlasPositionNormal;
 	float2 atlasSizeNormal;
-	uint atlasIndex;
+	int atlasIndex;
+	float angle;
 	float2 position;
 	float2 size;
 	float2 origin;
-	float angle;
 	float2 cropTopLeft;
 	float2 cropBottomRight;
 };
@@ -33,8 +33,8 @@ struct LineObject
 {
 	float2 a;
 	float2 b;
-	float thickness;
 	float4 color;
+	float thickness;
 };
 
 struct DrawObject

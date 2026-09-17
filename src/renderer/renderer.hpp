@@ -11,6 +11,7 @@
 #include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include <px/graphics/color.hpp>
 #include <px/graphics/texture.hpp>
 #include <px/math/vec.hpp>
 #include <renderer/object_buffer.hpp>
@@ -29,7 +30,7 @@ class GPUDevice
 class Renderer
 {
   public:
-    Renderer(Uint32 width, Uint32 height)
+    Renderer(Uint32 width, Uint32 height, Uint32 maxObjects = 100000) : m_maxObjects(maxObjects)
     {
         m_width  = width;
         m_height = height;
@@ -38,7 +39,8 @@ class Renderer
     }
     ~Renderer() { destroy(); }
 
-    void draw(std::vector<DrawLayer> &layerQueue, px::Color clearColor = {}, bool dumpSyncedAtlases = false);
+    void draw(std::vector<DrawLayer> &layerQueue, px::RGBColor clearColor = {},
+              bool dumpSyncedAtlases = false);
     GPUTextureAtlas &atlas() { return m_atlas; }
 
   private:
@@ -80,7 +82,7 @@ class Renderer
     SDL_GPUSampler *m_sampler          = nullptr;
 
     GPUTextureAtlas m_atlas;
-    Uint32 m_maxObjects = 100000;
+    const Uint32 m_maxObjects = 1;
     ObjectBuffer<GPUDrawObject> m_objectBuffer;
     ObjectBuffer<GPUTextureObject> m_textureBuffer;
     ObjectBuffer<GPURectangleObject> m_rectangleBuffer;
