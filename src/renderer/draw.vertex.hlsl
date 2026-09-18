@@ -11,30 +11,15 @@ struct TextureObject
 	float2 cropBottomRight;
 };
 
-struct RectangleObject
+struct GPUBasicShapeObject
 {
 	float2 position;
 	float2 size;
 	float2 origin;
+	int fill;
+	float outlineThickness;
+	float4 color;
 	float angle;
-	float4 color;
-};
-
-struct EllipseObject
-{
-	float2 position;
-	float2 size;
-	float2 origin;
-	float angle;
-	float4 color;
-};
-
-struct LineObject
-{
-	float2 a;
-	float2 b;
-	float4 color;
-	float thickness;
 };
 
 struct DrawObject
@@ -60,13 +45,12 @@ struct Output
 
 StructuredBuffer<DrawObject> objectBuffer : register(t0, space0);
 StructuredBuffer<TextureObject> textureBuffer : register(t1, space0);
-StructuredBuffer<RectangleObject> rectangleBuffer : register(t2, space0);
-StructuredBuffer<EllipseObject> ellipseBuffer : register(t3, space0);
-StructuredBuffer<LineObject> lineBuffer : register(t4, space0);
+StructuredBuffer<GPUBasicShapeObject> shapeBuffer : register(t2, space0);
 
 cbuffer Uniforms : register(b0, space1)
 {
 	float2 screenSize;
+	uint objectStartIndex;
 };
 
 float2 normalToScreen(float2 normalPos)
@@ -77,27 +61,6 @@ float2 normalToScreen(float2 normalPos)
 float2 screenToNormal(float2 screenPos)
 {
 	return screenPos / screenSize * 2.0f - 1.0f;
-}
-
-float2 handleLineTransform(float2 a, float2 b, float thickness, float2 vert)
-{
-	float2 d = b - a;
-	float length = sqrt(d.x * d.x + d.y * d.y);
-	vert.x *= length / screenSize.x;
-	vert.y *= thickness / screenSize.y;
-
-	float angle = atan2(d.y, d.x);
-
-	float newX = vert.x * cos(angle) - vert.y * sin(angle);
-	float newY = vert.x * sin(angle) + vert.y * cos(angle);
-	vert = float2(newX, newY);
-
-	float2 midpoint = (a + b) * 0.5f;
-	vert -= 1.0f;
-	vert = normalToScreen(vert);
-	vert += midpoint;
-	vert = screenToNormal(vert);
-	return vert;
 }
 
 float2 handleStandardTransform(float2 position, float2 size, float2 origin, float angle, float2 vert)
@@ -127,7 +90,7 @@ Output main(Input input)
 
 	float2 vert = verts[input.vertID];
 	float2 uv = (vert + 1.0f) * 0.5f;
-	DrawObject object = objectBuffer[input.instanceID];
+	DrawObject object = objectBuffer[objectStartIndex + input.instanceID];
 
 	switch (object.type)
 	{
@@ -138,21 +101,10 @@ Output main(Input input)
 		}
 		break;
 		case 1:
-		{
-			RectangleObject rect = rectangleBuffer[object.index];
-			vert = handleStandardTransform(rect.position, rect.size, rect.origin, rect.angle, vert);
-		}
-		break;
 		case 2:
 		{
-			EllipseObject ellipse = ellipseBuffer[object.index];
-			vert = handleStandardTransform(ellipse.position, ellipse.size, ellipse.origin, ellipse.angle, vert);
-		}
-		break;
-		case 3:
-		{
-			LineObject l = lineBuffer[object.index];
-			vert = handleLineTransform(l.a, l.b, l.thickness, vert);
+			GPUBasicShapeObject shape = shapeBuffer[object.index];
+			vert = handleStandardTransform(shape.position, shape.size, shape.origin, shape.angle, vert);
 		}
 		break;
 	}

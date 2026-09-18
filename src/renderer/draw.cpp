@@ -2,10 +2,13 @@
 
 #include <px/graphics/color.hpp>
 #include <px/log.hpp>
+#include <px/time/time_measure.hpp>
 #include <renderer/types.hpp>
 
-void Renderer::draw(const DrawCommand &command, px::Color clearColor, bool dumpSyncedAtlases)
+void Renderer::draw(DrawCommand &command, px::Color clearColor, bool dumpSyncedAtlases)
 {
+    command.sort();
+
     m_atlas.sync(dumpSyncedAtlases);
 
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
@@ -23,14 +26,17 @@ void Renderer::draw(const DrawCommand &command, px::Color clearColor, bool dumpS
     draw_upload_objects(command, commandBuffer);
 
     size_t currentInstance = 0;
-    for (const DrawLayerData &layer : command.getLayers())
+    for (DrawLayerData &layer : command.getLayers())
     {
+        layer.layer.sort();
+
         size_t layerObjectCount = layer.layer.getObjects().size();
 
         draw_layer(commandBuffer, (Uint32)currentInstance, (Uint32)layerObjectCount);
         draw_composite(commandBuffer, layer.blendMode);
 
         currentInstance += layerObjectCount;
+        std::swap(m_drawTextures[0], m_drawTextures[2]);
     }
 
     SDL_GPUTexture *swapchainTexture;

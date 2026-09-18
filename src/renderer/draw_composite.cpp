@@ -1,12 +1,13 @@
 #include "renderer.hpp"
+#include <SDL3/SDL_gpu.h>
 
 void Renderer::draw_composite(SDL_GPUCommandBuffer *commandBuffer, DrawLayerBlendMode blendMode)
 {
     SDL_GPUColorTargetInfo colorTargetInfo{};
     colorTargetInfo.clear_color   = {0.0f, 0.0f, 0.0f, 0.0f};
-    colorTargetInfo.load_op       = SDL_GPU_LOADOP_CLEAR;
+    colorTargetInfo.load_op       = SDL_GPU_LOADOP_DONT_CARE;
     colorTargetInfo.store_op      = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.texture       = m_compositeTexture;
+    colorTargetInfo.texture       = m_drawTextures[2];
     SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
     SDL_BindGPUGraphicsPipeline(renderPass, m_compositePipeline);
 
@@ -26,15 +27,4 @@ void Renderer::draw_composite(SDL_GPUCommandBuffer *commandBuffer, DrawLayerBlen
 
     SDL_DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
     SDL_EndGPURenderPass(renderPass);
-
-    SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
-
-    SDL_GPUTextureLocation location{};
-    location.texture = m_compositeTexture;
-
-    SDL_GPUTextureLocation dest{};
-    dest.texture = m_drawTextures[0];
-
-    SDL_CopyGPUTextureToTexture(copyPass, &location, &dest, m_width, m_height, 1, true);
-    SDL_EndGPUCopyPass(copyPass);
 }

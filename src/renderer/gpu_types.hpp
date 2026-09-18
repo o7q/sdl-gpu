@@ -11,16 +11,20 @@ struct GPUTextureObject
     float origin[2];              // 40
     float cropTopLeft[2];         // 48
     float cropBottomRight[2];     // 56
+    // SIZE: 64
 };
 
 struct GPUBasicShapeObject
 {
-    float position[2]; // 0
-    float size[2];     // 8
-    float origin[2];   // 16
-    float angle;       // 24
-    float _pad0;       // 28
-    float color[4];    // 32
+    float position[2];      // 0
+    float size[2];          // 8
+    float origin[2];        // 16
+    int fill;               // 24
+    float outlineThickness; // 28
+    float color[4];         // 32
+    float angle;            // 48
+    float _pad[3];          // 54
+    // SIZE: 64
 };
 
 struct GPUDrawObject
@@ -29,4 +33,10 @@ struct GPUDrawObject
     int index;     // 4
     float opacity; // 8
     int filter;    // 12
+};
+
+struct GPUDrawVertexUniforms
+{
+    float screenSize[2];
+    int objectStartIndex;
 };

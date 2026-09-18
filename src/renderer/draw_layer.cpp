@@ -14,8 +14,11 @@ void Renderer::draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 startObjec
     SDL_BindGPUVertexStorageBuffers(renderPass, 0, buffers, 3);
     SDL_BindGPUFragmentStorageBuffers(renderPass, 0, buffers, 3);
 
-    float screenSize[2] = {(float)m_width, (float)m_height};
-    SDL_PushGPUVertexUniformData(commandBuffer, 0, &screenSize, sizeof(screenSize));
+    GPUDrawVertexUniforms uniforms;
+    uniforms.screenSize[0] = (float)m_width;
+    uniforms.screenSize[1] = (float)m_height;
+    uniforms.objectStartIndex = (int)startObject;
+    SDL_PushGPUVertexUniformData(commandBuffer, 0, &uniforms, sizeof(uniforms));
 
     SDL_GPUTextureSamplerBinding atlasBinding{};
     atlasBinding.texture = m_atlas.getGPUTexture();
@@ -23,7 +26,7 @@ void Renderer::draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 startObjec
 
     SDL_BindGPUFragmentSamplers(renderPass, 0, &atlasBinding, 1);
 
-    SDL_DrawGPUPrimitives(renderPass, 6, objectCount, 0, startObject);
+    SDL_DrawGPUPrimitives(renderPass, 6, objectCount, 0, 0);
 
     SDL_EndGPURenderPass(renderPass);
 }

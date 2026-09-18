@@ -11,30 +11,15 @@ struct TextureObject
     float2 cropBottomRight;
 };
 
-struct RectangleObject
+struct GPUBasicShapeObject
 {
     float2 position;
     float2 size;
     float2 origin;
+    int fill;
+    float outlineThickness;
+    float4 color;
     float angle;
-    float4 color;
-};
-
-struct EllipseObject
-{
-    float2 position;
-    float2 size;
-    float2 origin;
-    float angle;
-    float4 color;
-};
-
-struct LineObject
-{
-    float2 a;
-    float2 b;
-    float4 color;
-    float thickness;
 };
 
 struct DrawObject
@@ -56,13 +41,11 @@ SamplerState atlasSampler : register(s0, space2);
 
 StructuredBuffer<DrawObject> objectBuffer : register(t1, space2);
 StructuredBuffer<TextureObject> textureBuffer : register(t2, space2);
-StructuredBuffer<RectangleObject> rectangleBuffer : register(t3, space2);
-StructuredBuffer<EllipseObject> ellipseBuffer : register(t4, space2);
-StructuredBuffer<LineObject> lineBuffer : register(t5, space2);
+StructuredBuffer<GPUBasicShapeObject> shapeBuffer : register(t3, space2);
 
 float4 main(Input input) : SV_TARGET
 {
-    float4 color = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
     DrawObject object = objectBuffer[input.objectIndex];
 
     switch (object.type)
@@ -82,26 +65,29 @@ float4 main(Input input) : SV_TARGET
         break;
         case 1:
         {
-            RectangleObject rect = rectangleBuffer[object.index];
-            color = rect.color;
+            GPUBasicShapeObject shape = shapeBuffer[object.index];
+            color = shape.color;
         }
         break;
         case 2:
         {
-            EllipseObject ellipse = ellipseBuffer[object.index];
+            GPUBasicShapeObject shape = shapeBuffer[object.index];
 
             float2 uv = input.uv - 0.5f;
 
-            if (uv.x * uv.x + uv.y * uv.y < 0.25f)
+            if (shape.fill)
             {
-                color = ellipse.color;
+                if (uv.x * uv.x + uv.y * uv.y < 0.25f)
+                {
+                    color = shape.color;
+                }
             }
-        }
-        break;
-        case 3:
-        {
-            LineObject l = lineBuffer[object.index];
-            color = l.color;
+            else {     
+                if (uv.x * uv.x + uv.y * uv.y < 0.25f && uv.x * uv.x + uv.y * uv.y > 0.2444444f)
+                {
+                    color = shape.color;
+                }
+            }
         }
         break;
     }

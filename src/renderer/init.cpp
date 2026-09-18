@@ -63,7 +63,7 @@ void Renderer::init_textures_and_samplers()
     textureInfo.usage                = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER;
     m_drawTextures[0]                = SDL_CreateGPUTexture(m_device, &textureInfo);
     m_drawTextures[1]                = SDL_CreateGPUTexture(m_device, &textureInfo);
-    m_compositeTexture               = SDL_CreateGPUTexture(m_device, &textureInfo);
+    m_drawTextures[2]                = SDL_CreateGPUTexture(m_device, &textureInfo);
 
     SDL_GPUSamplerCreateInfo samplerInfo{};
     samplerInfo.min_filter     = SDL_GPU_FILTER_NEAREST;

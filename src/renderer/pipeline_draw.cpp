@@ -7,10 +7,10 @@ void Renderer::init_draw_pipeline()
 {
     SDL_GPUShader *vertexShader =
         loadShader(m_device, "src/renderer/compiled/draw.vertex.spv", SDL_GPU_SHADERSTAGE_VERTEX,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 5, 0, 1);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 0, 3, 0, 1);
     SDL_GPUShader *fragmentShader =
         loadShader(m_device, "src/renderer/compiled/draw.fragment.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
-                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 5, 0, 0);
+                   SDL_GPU_SHADERFORMAT_SPIRV, 1, 3, 0, 0);
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo{};
 

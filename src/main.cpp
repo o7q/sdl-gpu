@@ -7,15 +7,15 @@
 #include <px/graphics/color.hpp>
 #include <px/graphics/texture.hpp>
 #include <px/math/angle.hpp>
+#include <px/time/time_measure.hpp>
 #include <renderer/renderer.hpp>
 #include <renderer/types.hpp>
-#include <vector>
 
 int main()
 {
     SDL_Init(SDL_INIT_VIDEO);
 
-    Renderer renderer({1024, 512});
+    Renderer renderer(px::Vec2u{512, 512});
 
     uint64_t bedcat      = renderer.uploadStaticTexture({"src/images/bedcat.png"});
     uint64_t greenShart  = renderer.uploadStaticTexture({"src/images/green shart.png"});
@@ -30,23 +30,26 @@ int main()
 
     float angle = 0.0f;
 
+    int count = 0;
+
     while (running)
     {
+        px::TimeMeasure measure;
+        measure.start();
+
         DrawCommand command;
-
-        for (int i = 0; i < 20; ++i)
+        DrawLayer layer;
+        for (int i = 0; i < 1; ++i)
         {
-            DrawLayer layer;
-    
-            TextureDrawInfo tex;
-            tex.id       = sparkleCat;
-            tex.position = {i * 100.0f, 0};
-            tex.origin   = {0, 0};
-            layer.addSprite(tex, 0);
-    
-            command.addLayer(layer, i, DrawLayerBlendMode::AlphaOver);
+            EllipseDrawInfo ellipse;
+            ellipse.position = {i * 50.0f + 200, 200};
+            ellipse.size     = {300, 50};
+            ellipse.color = {255, 0, 0, 255};
+            ellipse.fill = false;
+            ellipse.outlineThickness = 3;
+            layer.addSprite(ellipse, i);
         }
-
+        command.addLayer(layer, 0, DrawLayerBlendMode::AlphaOver);
         angle += 0.0007f;
 
         SDL_Event event;
@@ -60,16 +63,12 @@ int main()
             }
         }
 
-        renderer.draw(command, {255, 0, 0}, true);
+        renderer.draw(command, {25, 10, 40}, true);
 
-        Uint64 currentTicks = SDL_GetTicks();
-        frameCount++;
-        if (currentTicks - startTicks >= 1000)
-        {
-            std::cout << frameCount << std::endl;
-            frameCount = 0;
-            startTicks = currentTicks;
-        }
+        measure.stop();
+
+            float framerate = 1000.0f / measure.getElapsedTime<std::milli>();
+            std::cout << framerate << std::endl;
     }
 
     return 0;

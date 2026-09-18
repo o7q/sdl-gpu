@@ -1,6 +1,5 @@
 #pragma once
 
-#include "renderer/gpu_types.hpp"
 #include <cstdint>
 #include <px/graphics/color.hpp>
 #include <px/graphics/texture.hpp>
@@ -9,7 +8,6 @@
 #include <px/variant_bp.hpp>
 #include <set>
 #include <variant>
-#include <vector>
 
 using TextureType = std::variant<uint64_t, px::Texture>;
 
@@ -32,9 +30,11 @@ struct RectangleDrawInfo
     px::Vec2f size;
     px::Vec2Opt_f origin;
     px::Angle angle;
-    px::Color color = {255, 255, 255, 255};
-    float opacity   = 1.0f;
-    int filter      = 0;
+    px::Color color        = {255, 255, 255, 255};
+    bool fill              = true;
+    float outlineThickness = 1.0f;
+    float opacity          = 1.0f;
+    int filter             = 0;
 };
 
 struct EllipseDrawInfo
@@ -43,9 +43,11 @@ struct EllipseDrawInfo
     px::Vec2f size;
     px::Vec2Opt_f origin;
     px::Angle angle;
-    px::Color color = {255, 255, 255, 255};
-    float opacity   = 1.0f;
-    int filter      = 0;
+    px::Color color        = {255, 255, 255, 255};
+    bool fill              = true;
+    float outlineThickness = 1.0f;
+    float opacity          = 1.0f;
+    int filter             = 0;
 };
 
 struct LineDrawInfo
@@ -78,8 +80,6 @@ struct DrawInfo
 {
     DrawInfoType object;
     int zIndex = 0;
-
-    bool operator<(const DrawInfo &other) const { return zIndex < other.zIndex; }
 };
 
 class DrawLayer
@@ -90,13 +90,19 @@ class DrawLayer
         DrawInfo info_;
         info_.object = info;
         info_.zIndex = zIndex;
-        m_objects.insert(info_);
+        m_objects.push_back(info_);
     }
 
-    const std::multiset<DrawInfo> &getObjects() const { return m_objects; }
+    void sort()
+    {
+        std::sort(m_objects.begin(), m_objects.end(),
+                  [](const DrawInfo &a, const DrawInfo &b) { return a.zIndex < b.zIndex; });
+    }
+
+    const std::vector<DrawInfo> &getObjects() const { return m_objects; }
 
   private:
-    std::multiset<DrawInfo> m_objects;
+    std::vector<DrawInfo> m_objects;
 };
 
 struct DrawLayerData
@@ -104,8 +110,6 @@ struct DrawLayerData
     DrawLayer layer;
     DrawLayerBlendMode blendMode = DrawLayerBlendMode::AlphaOver;
     int zIndex                   = 0;
-
-    bool operator<(const DrawLayerData &other) const { return zIndex < other.zIndex; }
 };
 
 class DrawCommand
@@ -115,14 +119,20 @@ class DrawCommand
                   DrawLayerBlendMode blendMode = DrawLayerBlendMode::AlphaOver)
     {
         DrawLayerData data;
-        data.layer     = layer;
+        data.layer     = std::move(layer);
         data.zIndex    = zIndex;
         data.blendMode = blendMode;
-        m_layers.insert(data);
+        m_layers.push_back(data);
     }
 
-    const std::multiset<DrawLayerData> &getLayers() const { return m_layers; }
+    void sort()
+    {
+        std::sort(m_layers.begin(), m_layers.end(),
+                  [](const DrawLayerData &a, const DrawLayerData &b) { return a.zIndex < b.zIndex; });
+    }
+
+    std::vector<DrawLayerData> &getLayers() { return m_layers; }
 
   private:
-    std::multiset<DrawLayerData> m_layers;
+    std::vector<DrawLayerData> m_layers;
 };

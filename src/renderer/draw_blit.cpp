@@ -13,7 +13,7 @@ void Renderer::draw_blit_to_swapchain_texture(SDL_GPUCommandBuffer *commandBuffe
     SDL_BindGPUGraphicsPipeline(renderPass, m_blitPipeline);
 
     SDL_GPUTextureSamplerBinding textureBinding;
-    textureBinding.texture = m_compositeTexture;
+    textureBinding.texture = m_drawTextures[0];
     textureBinding.sampler = m_sampler;
     SDL_BindGPUFragmentSamplers(renderPass, 0, &textureBinding, 1);
 

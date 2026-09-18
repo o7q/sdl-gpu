@@ -33,7 +33,7 @@ void Renderer::destroy_blit_pipeline() { SDL_ReleaseGPUGraphicsPipeline(m_device
 void Renderer::destroy_textures_and_samplers()
 {
     SDL_ReleaseGPUSampler(m_device, m_sampler);
-    SDL_ReleaseGPUTexture(m_device, m_compositeTexture);
+    SDL_ReleaseGPUTexture(m_device, m_drawTextures[2]);
     SDL_ReleaseGPUTexture(m_device, m_drawTextures[1]);
     SDL_ReleaseGPUTexture(m_device, m_drawTextures[0]);
 }

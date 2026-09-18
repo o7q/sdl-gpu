@@ -11,35 +11,24 @@
 #include <px/graphics/texture.hpp>
 #include <px/math/vec.hpp>
 
-class GPUDevice
-{
-  public:
-    GPUDevice() { m_device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, nullptr); }
-    SDL_GPUDevice *get() { return m_device; }
-
-  private:
-    SDL_GPUDevice *m_device = nullptr;
-};
-
 class Renderer
 {
   public:
-    Renderer(Uint32 width, Uint32 height, Uint32 maxObjects = 100000) : m_maxObjects(maxObjects)
+    Renderer(px::Vec2u size, Uint32 maxObjects = 100000) : m_maxObjects(maxObjects)
     {
-        m_width  = width;
-        m_height = height;
+        m_width  = size.x;
+        m_height = size.y;
 
         init();
     }
     ~Renderer() { destroy(); }
 
-    void draw(const DrawCommand &command, px::Color clearColor = {0, 0, 0, 255},
-              bool dumpSyncedAtlases = false);
+    void draw(DrawCommand &command, px::Color clearColor = {0, 0, 0, 255}, bool dumpSyncedAtlases = false);
     uint64_t uploadStaticTexture(px::Texture &texture) { return m_atlas.pushTexture(texture); }
     uint64_t uploadStaticTexture(px::Texture &&texture) { return uploadStaticTexture(texture); }
 
   private:
-    void draw_upload_objects(const DrawCommand &command, SDL_GPUCommandBuffer *commandBuffer);
+    void draw_upload_objects(DrawCommand &command, SDL_GPUCommandBuffer *commandBuffer);
     void draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 startObject, Uint32 objectCount);
     void draw_composite(SDL_GPUCommandBuffer *commandBuffer, DrawLayerBlendMode blendMode);
     void draw_blit_to_swapchain_texture(SDL_GPUCommandBuffer *commandBuffer, SDL_GPUTexture *swapchainTexture,
@@ -72,9 +61,8 @@ class Renderer
     SDL_GPUGraphicsPipeline *m_blitPipeline      = nullptr;
 
     Uint32 m_width = 0, m_height = 0;
-    SDL_GPUTexture *m_drawTextures[2]  = {nullptr, nullptr};
-    SDL_GPUTexture *m_compositeTexture = nullptr;
-    SDL_GPUSampler *m_sampler          = nullptr;
+    SDL_GPUTexture *m_drawTextures[3] = {nullptr, nullptr, nullptr};
+    SDL_GPUSampler *m_sampler         = nullptr;
 
     GPUTextureAtlas m_atlas;
     const Uint32 m_maxObjects = 1;

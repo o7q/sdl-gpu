@@ -3,18 +3,32 @@
 #include "renderer/gpu_types.hpp"
 #include "renderer/types.hpp"
 #include <px/graphics/texture.hpp>
+#include <px/math/angle.hpp>
 #include <px/variant_bp.hpp>
 
-void Renderer::draw_upload_objects(const DrawCommand &command, SDL_GPUCommandBuffer *commandBuffer)
+void Renderer::draw_upload_objects(DrawCommand &command, SDL_GPUCommandBuffer *commandBuffer)
 {
     std::vector<GPUDrawObject> gpuObjects;
     std::vector<GPUTextureObject> gpuTextures;
     std::vector<GPUBasicShapeObject> gpuShapes;
 
+    size_t objCount = 0;
+    bool break2     = false;
     for (const DrawLayerData &layer : command.getLayers())
     {
+        if (break2)
+        {
+            break;
+        }
+
         for (const DrawInfo &layerObject : layer.layer.getObjects())
         {
+            if (objCount >= m_maxObjects)
+            {
+                break2 = true;
+                break;
+            }
+
             std::visit(
                 px::variant::overloaded{
                     [this, &gpuObjects, &gpuTextures](const TextureDrawInfo &info_)
@@ -60,18 +74,20 @@ void Renderer::draw_upload_objects(const DrawCommand &command, SDL_GPUCommandBuf
                         gpuObjects.push_back(object);
 
                         GPUBasicShapeObject rectangle;
-                        rectangle.position[0] = info_.position.x;
-                        rectangle.position[1] = info_.position.y;
-                        rectangle.size[0]     = info_.size.x;
-                        rectangle.size[1]     = info_.size.y;
-                        rectangle.origin[0]   = info_.origin.x.value_or(std::floor(info_.size.x / 2.0f));
-                        rectangle.origin[1]   = info_.origin.y.value_or(std::floor(info_.size.y / 2.0f));
-                        rectangle.angle       = info_.angle.radians();
-                        px::Vec4f color       = info_.color.normalize();
-                        rectangle.color[0]    = color.x;
-                        rectangle.color[1]    = color.y;
-                        rectangle.color[2]    = color.z;
-                        rectangle.color[3]    = color.w;
+                        rectangle.position[0]      = info_.position.x;
+                        rectangle.position[1]      = info_.position.y;
+                        rectangle.size[0]          = info_.size.x;
+                        rectangle.size[1]          = info_.size.y;
+                        rectangle.origin[0]        = info_.origin.x.value_or(std::floor(info_.size.x / 2.0f));
+                        rectangle.origin[1]        = info_.origin.y.value_or(std::floor(info_.size.y / 2.0f));
+                        rectangle.angle            = info_.angle.radians();
+                        px::Vec4f color            = info_.color.normalize();
+                        rectangle.color[0]         = color.x;
+                        rectangle.color[1]         = color.y;
+                        rectangle.color[2]         = color.z;
+                        rectangle.color[3]         = color.w;
+                        rectangle.fill             = info_.fill;
+                        rectangle.outlineThickness = info_.outlineThickness;
                         gpuShapes.push_back(rectangle);
                     },
                     [&gpuObjects, &gpuShapes](const EllipseDrawInfo &info_)
@@ -84,18 +100,20 @@ void Renderer::draw_upload_objects(const DrawCommand &command, SDL_GPUCommandBuf
                         gpuObjects.push_back(object);
 
                         GPUBasicShapeObject ellipse;
-                        ellipse.position[0] = info_.position.x;
-                        ellipse.position[1] = info_.position.y;
-                        ellipse.size[0]     = info_.size.x;
-                        ellipse.size[1]     = info_.size.y;
-                        ellipse.origin[0]   = info_.origin.x.value_or(std::floor(info_.size.x / 2.0f));
-                        ellipse.origin[1]   = info_.origin.y.value_or(std::floor(info_.size.y / 2.0f));
-                        ellipse.angle       = info_.angle.radians();
-                        px::Vec4f color     = info_.color.normalize();
-                        ellipse.color[0]    = color.x;
-                        ellipse.color[1]    = color.y;
-                        ellipse.color[2]    = color.z;
-                        ellipse.color[3]    = color.w;
+                        ellipse.position[0]      = info_.position.x;
+                        ellipse.position[1]      = info_.position.y;
+                        ellipse.size[0]          = info_.size.x;
+                        ellipse.size[1]          = info_.size.y;
+                        ellipse.origin[0]        = info_.origin.x.value_or(std::floor(info_.size.x / 2.0f));
+                        ellipse.origin[1]        = info_.origin.y.value_or(std::floor(info_.size.y / 2.0f));
+                        ellipse.angle            = info_.angle.radians();
+                        px::Vec4f color          = info_.color.normalize();
+                        ellipse.color[0]         = color.x;
+                        ellipse.color[1]         = color.y;
+                        ellipse.color[2]         = color.z;
+                        ellipse.color[3]         = color.w;
+                        ellipse.fill             = info_.fill;
+                        ellipse.outlineThickness = info_.outlineThickness;
                         gpuShapes.push_back(ellipse);
                     },
                     [&gpuObjects, &gpuShapes](const LineDrawInfo &info_)
@@ -107,24 +125,31 @@ void Renderer::draw_upload_objects(const DrawCommand &command, SDL_GPUCommandBuf
                         object.opacity = info_.opacity;
                         gpuObjects.push_back(object);
 
-                        // GPUBasicShapeObject rectangle;
-                        // // rectangle.position[0] = info_.position.x;
-                        // // rectangle.position[1] = info_.position.y;
-                        // // rectangle.size[0]     = info_.size.x;
-                        // // rectangle.size[1]     = info_.size.y;
-                        // // rectangle.origin[0]   = info_.origin.x.value_or(std::floor(info_.size.x
-                        // / 2.0f));
-                        // // rectangle.origin[1]   = info_.origin.y.value_or(std::floor(info_.size.y
-                        // / 2.0f));
-                        // // rectangle.angle       = info_.angle.radians();
-                        // // px::Vec4f color       = info_.color.normalize();
-                        // // rectangle.color[0]    = color.x;
-                        // // rectangle.color[1]    = color.y;
-                        // // rectangle.color[2]    = color.z;
-                        // // rectangle.color[3]    = color.w;
-                        // gpuShapes.push_back(rectangle);
+                        float length       = info_.a.distanceTo(info_.b);
+                        px::Vec2f midpoint = (info_.a + info_.b) * 0.5f;
+                        px::Vec2f size     = {length, info_.thickness};
+                        px::Angle angle    = {info_.a, info_.b};
+
+                        GPUBasicShapeObject rectangle;
+                        rectangle.position[0]      = midpoint.x;
+                        rectangle.position[1]      = midpoint.y;
+                        rectangle.size[0]          = size.x;
+                        rectangle.size[1]          = size.y;
+                        rectangle.origin[0]        = size.x * 0.5f;
+                        rectangle.origin[1]        = size.y * 0.5f;
+                        rectangle.angle            = angle.radians();
+                        px::Vec4f color            = info_.color.normalize();
+                        rectangle.color[0]         = color.x;
+                        rectangle.color[1]         = color.y;
+                        rectangle.color[2]         = color.z;
+                        rectangle.color[3]         = color.w;
+                        rectangle.fill             = false;
+                        rectangle.outlineThickness = 0;
+                        gpuShapes.push_back(rectangle);
                     }},
                 layerObject.object);
+
+            objCount++;
         }
     }
 
