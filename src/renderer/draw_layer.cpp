@@ -10,10 +10,9 @@ void Renderer::draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 instanceCo
     SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
     SDL_BindGPUGraphicsPipeline(renderPass, m_drawPipeline);
 
-    SDL_GPUBuffer *buffers[5] = {m_objectBuffer.buffer(), m_textureBuffer.buffer(),
-                                 m_rectangleBuffer.buffer(), m_ellipseBuffer.buffer(), m_lineBuffer.buffer()};
-    SDL_BindGPUVertexStorageBuffers(renderPass, 0, buffers, 5);
-    SDL_BindGPUFragmentStorageBuffers(renderPass, 0, buffers, 5);
+    SDL_GPUBuffer *buffers[3] = {m_objectBuffer.buffer(), m_textureBuffer.buffer(), m_shapeBuffer.buffer()};
+    SDL_BindGPUVertexStorageBuffers(renderPass, 0, buffers, 3);
+    SDL_BindGPUFragmentStorageBuffers(renderPass, 0, buffers, 3);
 
     float screenSize[2] = {(float)m_width, (float)m_height};
     SDL_PushGPUVertexUniformData(commandBuffer, 0, &screenSize, sizeof(screenSize));

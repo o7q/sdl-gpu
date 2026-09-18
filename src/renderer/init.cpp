@@ -1,6 +1,7 @@
 #include "renderer.hpp"
 
 #include <SDL3/SDL_gpu.h>
+#include <SDL3/SDL_init.h>
 #include <iostream>
 
 void Renderer::init()
@@ -8,7 +9,7 @@ void Renderer::init()
     SDL_Init(SDL_INIT_VIDEO);
 
     init_window_and_device();
-    init_atlas();
+    init_atlases();
     init_buffers();
     init_draw_pipeline();
     init_composite_pipeline();
@@ -42,15 +43,13 @@ void Renderer::init_window_and_device()
     }
 }
 
-void Renderer::init_atlas() { m_atlas.init(m_device); }
+void Renderer::init_atlases() { m_atlas.init(m_device); }
 
 void Renderer::init_buffers()
 {
     m_objectBuffer.init(m_device, m_maxObjects);
     m_textureBuffer.init(m_device, m_maxObjects);
-    m_rectangleBuffer.init(m_device, m_maxObjects);
-    m_ellipseBuffer.init(m_device, m_maxObjects);
-    m_lineBuffer.init(m_device, m_maxObjects);
+    m_shapeBuffer.init(m_device, m_maxObjects);
 }
 
 void Renderer::init_textures_and_samplers()

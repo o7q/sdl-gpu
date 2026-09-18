@@ -1,21 +1,25 @@
 #include "atlas.hpp"
+
 #include <SDL3/SDL_gpu.h>
 #include <cstdint>
 #include <iostream>
 #include <px/graphics/color.hpp>
 #include <px/graphics/texture.hpp>
+#include <px/log.hpp>
 #include <utility>
 #include <vector>
 
-AtlasUVIndex GPUTextureAtlas::getIndex(uint64_t id) const
+void GPUTextureAtlas::sync(bool dumpAtlasTextures)
 {
-    auto it = m_indices.find(id);
-    if (it == m_indices.end())
+    if (m_upToDate)
     {
-        px::log::error("px::GPUTextureAtlas", "Error getting UV index! Invalid ID: ", id);
-        return {};
+        return;
     }
-    return it->second;
+
+    purgeGPUCache();
+    create_atlases(dumpAtlasTextures);
+
+    m_upToDate = true;
 }
 
 void GPUTextureAtlas::create_atlases(bool dumpAtlasTextures)
@@ -26,6 +30,8 @@ void GPUTextureAtlas::create_atlases(bool dumpAtlasTextures)
 
     for (auto &[id, texture] : m_textureCache)
     {
+        m_atlasSize.x = std::min(std::max(texture.getSize().x + 1, m_atlasSize.x), m_maxAtlasSize.x);
+        m_atlasSize.y = std::min(std::max(texture.getSize().y + 1, m_atlasSize.y), m_maxAtlasSize.y);
         textureRefs.push_back({id, &texture});
     }
 
@@ -44,7 +50,9 @@ void GPUTextureAtlas::create_atlases(bool dumpAtlasTextures)
 
         if (size.x > (int)m_atlasSize.x || size.y > (int)m_atlasSize.y)
         {
-            std::cout << textureRef.first << ": Texture too big! Skipping" << std::endl;
+            px::log::error("px::GPUTextureAtlas::create_atlases()", textureRef.first,
+                           ": Texture too big! Skipping");
+
             continue;
         }
 

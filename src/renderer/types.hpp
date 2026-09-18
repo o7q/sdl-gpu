@@ -1,11 +1,17 @@
 #pragma once
 
+#include "renderer/gpu_types.hpp"
 #include <cstdint>
 #include <px/graphics/color.hpp>
+#include <px/graphics/texture.hpp>
 #include <px/math/angle.hpp>
 #include <px/math/vec.hpp>
+#include <px/variant_bp.hpp>
+#include <set>
 #include <variant>
 #include <vector>
+
+using TextureType = std::variant<uint64_t, px::Texture>;
 
 struct TextureDrawInfo
 {
@@ -53,12 +59,6 @@ struct LineDrawInfo
 
 using DrawInfoType = std::variant<TextureDrawInfo, RectangleDrawInfo, EllipseDrawInfo, LineDrawInfo>;
 
-struct DrawInfo
-{
-    int zIndex = 0;
-    DrawInfoType info;
-};
-
 enum class DrawLayerBlendMode
 {
     Replace,
@@ -74,9 +74,55 @@ enum class DrawLayerBlendMode
     Darken
 };
 
-struct DrawLayer
+struct DrawInfo
 {
-    int zIndex                   = 0;
+    DrawInfoType type;
+    int zIndex = 0;
+
+    bool operator<(const DrawInfo &other) const { return zIndex < other.zIndex; }
+};
+
+class DrawLayer
+{
+  public:
+    void addSprite(DrawInfoType info, int zIndex)
+    {
+        DrawInfo info_;
+        info_.type   = info;
+        info_.zIndex = zIndex;
+        m_objects.insert(info_);
+    }
+
+    const std::multiset<DrawInfo> &getObjects() const { return m_objects; }
+
+  private:
+    std::multiset<DrawInfo> m_objects;
+};
+
+struct DrawLayerData
+{
+    DrawLayer layer;
     DrawLayerBlendMode blendMode = DrawLayerBlendMode::AlphaOver;
-    std::vector<DrawInfo> sprites;
+    int zIndex                   = 0;
+
+    bool operator<(const DrawLayerData &other) const { return zIndex < other.zIndex; }
+};
+
+class DrawCommand
+{
+  public:
+    void addLayer(DrawLayer &layer, int zIndex = 0,
+                  DrawLayerBlendMode blendMode = DrawLayerBlendMode::AlphaOver)
+    {
+        DrawLayerData data;
+        data.layer     = layer;
+        data.zIndex    = zIndex;
+        data.blendMode = blendMode;
+        m_layers.insert(data);
+    }
+
+    const std::multiset<DrawLayerData> &getLayers() const { return m_layers; }
+
+  private:
+    std::multiset<DrawLayerData> m_layers;
 };

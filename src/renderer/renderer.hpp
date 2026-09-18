@@ -1,21 +1,15 @@
 #pragma once
 
-#include "atlas.hpp"
+#include "atlas/atlas.hpp"
 #include "gpu_types.hpp"
+#include "renderer/object_buffer.hpp"
 #include "types.hpp"
 #include <SDL3/SDL_gpu.h>
-#include <SDL3/SDL_init.h>
-#include <SDL3/SDL_mouse.h>
-#include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_stdinc.h>
-#include <SDL3/SDL_surface.h>
-#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <px/graphics/color.hpp>
 #include <px/graphics/texture.hpp>
 #include <px/math/vec.hpp>
-#include <renderer/object_buffer.hpp>
-#include <vector>
 
 class GPUDevice
 {
@@ -39,12 +33,13 @@ class Renderer
     }
     ~Renderer() { destroy(); }
 
-    void draw(std::vector<DrawLayer> &layerQueue, px::RGBColor clearColor = {},
+    void draw(const DrawCommand &command, px::Color clearColor = {0, 0, 0, 255},
               bool dumpSyncedAtlases = false);
-    GPUTextureAtlas &atlas() { return m_atlas; }
+    uint64_t uploadStaticTexture(px::Texture &texture) { return m_atlas.pushTexture(texture); }
+    uint64_t uploadStaticTexture(px::Texture &&texture) { return uploadStaticTexture(texture); }
 
   private:
-    void draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuffer *commandBuffer);
+    void draw_upload_objects(const std::multiset<DrawInfo> &objects, SDL_GPUCommandBuffer *commandBuffer);
     void draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 instanceCount);
     void draw_composite(SDL_GPUCommandBuffer *commandBuffer, DrawLayerBlendMode blendMode);
     void draw_blit_to_swapchain_texture(SDL_GPUCommandBuffer *commandBuffer, SDL_GPUTexture *swapchainTexture,
@@ -52,7 +47,7 @@ class Renderer
 
     void init();
     void init_window_and_device();
-    void init_atlas();
+    void init_atlases();
     void init_buffers();
     void init_draw_pipeline();
     void init_composite_pipeline();
@@ -61,7 +56,7 @@ class Renderer
 
     void destroy();
     void destroy_window_and_device();
-    void destroy_atlas();
+    void destroy_atlases();
     void destroy_buffers();
     void destroy_draw_pipeline();
     void destroy_composite_pipeline();
@@ -85,7 +80,5 @@ class Renderer
     const Uint32 m_maxObjects = 1;
     ObjectBuffer<GPUDrawObject> m_objectBuffer;
     ObjectBuffer<GPUTextureObject> m_textureBuffer;
-    ObjectBuffer<GPURectangleObject> m_rectangleBuffer;
-    ObjectBuffer<GPUEllipseObject> m_ellipseBuffer;
-    ObjectBuffer<GPULineObject> m_lineBuffer;
+    ObjectBuffer<GPUBasicShapeObject> m_shapeBuffer;
 };

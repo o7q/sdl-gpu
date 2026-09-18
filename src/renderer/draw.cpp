@@ -1,24 +1,17 @@
 #include "renderer.hpp"
-#include <SDL3/SDL_gpu.h>
-#include <SDL3/SDL_timer.h>
-#include <iostream>
+
 #include <px/graphics/color.hpp>
 #include <px/log.hpp>
 #include <renderer/types.hpp>
 
-void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::RGBColor clearColor, bool dumpSyncedAtlases)
+void Renderer::draw(const DrawCommand &command, px::Color clearColor, bool dumpSyncedAtlases)
 {
-    std::vector<DrawLayer> queueCopy = layerQueue;
-
     m_atlas.sync(dumpSyncedAtlases);
 
     SDL_GPUCommandBuffer *commandBuffer = SDL_AcquireGPUCommandBuffer(m_device);
 
-    std::sort(queueCopy.begin(), queueCopy.end(),
-              [](const DrawLayer &a, const DrawLayer &b) { return a.zIndex < b.zIndex; });
-
     SDL_GPUColorTargetInfo colorTargetInfo{};
-    px::Vec4f clearColorNormal   = px::Color(clearColor).normalize();
+    px::Vec4f clearColorNormal   = clearColor.normalize();
     colorTargetInfo.clear_color  = {clearColorNormal.x, clearColorNormal.y, clearColorNormal.z,
                                     clearColorNormal.w};
     colorTargetInfo.load_op      = SDL_GPU_LOADOP_CLEAR;
@@ -27,14 +20,15 @@ void Renderer::draw(std::vector<DrawLayer> &layerQueue, px::RGBColor clearColor,
     SDL_GPURenderPass *clearPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
     SDL_EndGPURenderPass(clearPass);
 
-    for (DrawLayer &layer : queueCopy)
+    for (const DrawLayerData &layer : command.getLayers())
     {
-        if (layer.sprites.size() > m_maxObjects)
+        const std::multiset<DrawInfo> &objects = layer.layer.getObjects();
+        if (objects.size() > m_maxObjects)
         {
             continue;
         }
-        draw_upload_queue(layer.sprites, commandBuffer);
-        draw_layer(commandBuffer, (Uint32)layer.sprites.size());
+        draw_upload_objects(objects, commandBuffer);
+        draw_layer(commandBuffer, (Uint32)objects.size());
         draw_composite(commandBuffer, layer.blendMode);
     }
 

@@ -1,27 +1,23 @@
 #include "renderer.hpp"
-#include <algorithm>
+
+#include "renderer/gpu_types.hpp"
+#include "renderer/types.hpp"
 #include <px/graphics/texture.hpp>
 #include <px/variant_bp.hpp>
-#include <renderer/atlas.hpp>
-#include <renderer/types.hpp>
 
-void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuffer *commandBuffer)
+void Renderer::draw_upload_objects(const std::multiset<DrawInfo> &objects,
+                                   SDL_GPUCommandBuffer *commandBuffer)
 {
-    std::sort(queue.begin(), queue.end(),
-              [](const DrawInfo &a, const DrawInfo &b) { return a.zIndex < b.zIndex; });
+    std::vector<GPUDrawObject> gpuObjects;
+    gpuObjects.reserve(objects.size());
+    std::vector<GPUTextureObject> gpuTextures;
+    std::vector<GPUBasicShapeObject> gpuShapes;
 
-    std::vector<GPUDrawObject> objects;
-    objects.reserve(queue.size());
-    std::vector<GPUTextureObject> textures;
-    std::vector<GPURectangleObject> rectangles;
-    std::vector<GPUEllipseObject> ellipses;
-    std::vector<GPULineObject> lines;
-
-    for (const DrawInfo &info : queue)
+    for (const DrawInfo &object : objects)
     {
         std::visit(
             px::variant::overloaded{
-                [this, &objects, &textures](const TextureDrawInfo &info_)
+                [this, &gpuObjects, &gpuTextures](const TextureDrawInfo &info_)
                 {
                     AtlasUVIndex index = m_atlas.getIndex(info_.id);
 
@@ -30,10 +26,10 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
 
                     GPUDrawObject object;
                     object.type    = 0;
-                    object.index   = (int)textures.size();
+                    object.index   = (int)gpuTextures.size();
                     object.filter  = info_.filter;
                     object.opacity = info_.opacity;
-                    objects.push_back(object);
+                    gpuObjects.push_back(object);
 
                     GPUTextureObject texture;
                     texture.atlasPositionNormal[0] = index.position.x;
@@ -52,18 +48,18 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
                     texture.cropTopLeft[1] = info_.cropTopLeft.y / textureSize.y;
                     texture.cropBottomRight[0] = info_.cropBottomRight.x / textureSize.x;
                     texture.cropBottomRight[1] = info_.cropBottomRight.y / textureSize.y;
-                    textures.push_back(texture);
+                    gpuTextures.push_back(texture);
                 },
-                [&objects, &rectangles](const RectangleDrawInfo &info_)
+                [&gpuObjects, &gpuShapes](const RectangleDrawInfo &info_)
                 {
                     GPUDrawObject object;
                     object.type    = 1;
-                    object.index   = (int)rectangles.size();
+                    object.index   = (int)gpuShapes.size();
                     object.filter  = info_.filter;
                     object.opacity = info_.opacity;
-                    objects.push_back(object);
+                    gpuObjects.push_back(object);
 
-                    GPURectangleObject rectangle;
+                    GPUBasicShapeObject rectangle;
                     rectangle.position[0] = info_.position.x;
                     rectangle.position[1] = info_.position.y;
                     rectangle.size[0]     = info_.size.x;
@@ -76,18 +72,18 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
                     rectangle.color[1]    = color.y;
                     rectangle.color[2]    = color.z;
                     rectangle.color[3]    = color.w;
-                    rectangles.push_back(rectangle);
+                    gpuShapes.push_back(rectangle);
                 },
-                [&objects, &ellipses](const EllipseDrawInfo &info_)
+                [&gpuObjects, &gpuShapes](const EllipseDrawInfo &info_)
                 {
                     GPUDrawObject object;
                     object.type    = 2;
-                    object.index   = (int)ellipses.size();
+                    object.index   = (int)gpuShapes.size();
                     object.filter  = info_.filter;
                     object.opacity = info_.opacity;
-                    objects.push_back(object);
+                    gpuObjects.push_back(object);
 
-                    GPUEllipseObject ellipse;
+                    GPUBasicShapeObject ellipse;
                     ellipse.position[0] = info_.position.x;
                     ellipse.position[1] = info_.position.y;
                     ellipse.size[0]     = info_.size.x;
@@ -100,40 +96,40 @@ void Renderer::draw_upload_queue(std::vector<DrawInfo> &queue, SDL_GPUCommandBuf
                     ellipse.color[1]    = color.y;
                     ellipse.color[2]    = color.z;
                     ellipse.color[3]    = color.w;
-                    ellipses.push_back(ellipse);
+                    gpuShapes.push_back(ellipse);
                 },
-                [&objects, &lines](const LineDrawInfo &info_)
+                [&gpuObjects, &gpuShapes](const LineDrawInfo &info_)
                 {
                     GPUDrawObject object;
-                    object.type    = 3;
-                    object.index   = (int)lines.size();
+                    object.type    = 1;
+                    object.index   = (int)gpuShapes.size();
                     object.filter  = info_.filter;
                     object.opacity = info_.opacity;
-                    objects.push_back(object);
+                    gpuObjects.push_back(object);
 
-                    GPULineObject line;
-                    line.a[0]       = info_.a.x;
-                    line.a[1]       = info_.a.y;
-                    line.b[0]       = info_.b.x;
-                    line.b[1]       = info_.b.y;
-                    line.thickness  = info_.thickness;
-                    px::Vec4f color = info_.color.normalize();
-                    line.color[0]   = color.x;
-                    line.color[1]   = color.y;
-                    line.color[2]   = color.z;
-                    line.color[3]   = color.w;
-                    lines.push_back(line);
+                    GPUBasicShapeObject rectangle;
+                    // rectangle.position[0] = info_.position.x;
+                    // rectangle.position[1] = info_.position.y;
+                    // rectangle.size[0]     = info_.size.x;
+                    // rectangle.size[1]     = info_.size.y;
+                    // rectangle.origin[0]   = info_.origin.x.value_or(std::floor(info_.size.x / 2.0f));
+                    // rectangle.origin[1]   = info_.origin.y.value_or(std::floor(info_.size.y / 2.0f));
+                    // rectangle.angle       = info_.angle.radians();
+                    // px::Vec4f color       = info_.color.normalize();
+                    // rectangle.color[0]    = color.x;
+                    // rectangle.color[1]    = color.y;
+                    // rectangle.color[2]    = color.z;
+                    // rectangle.color[3]    = color.w;
+                    gpuShapes.push_back(rectangle);
                 }},
-            info.info);
+            object.type);
     }
 
     SDL_GPUCopyPass *copyPass = SDL_BeginGPUCopyPass(commandBuffer);
 
-    m_objectBuffer.upload(copyPass, objects);
-    m_textureBuffer.upload(copyPass, textures);
-    m_rectangleBuffer.upload(copyPass, rectangles);
-    m_ellipseBuffer.upload(copyPass, ellipses);
-    m_lineBuffer.upload(copyPass, lines);
+    m_objectBuffer.upload(copyPass, gpuObjects);
+    m_textureBuffer.upload(copyPass, gpuTextures);
+    m_shapeBuffer.upload(copyPass, gpuShapes);
 
     SDL_EndGPUCopyPass(copyPass);
 }

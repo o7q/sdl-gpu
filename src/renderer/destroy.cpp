@@ -10,7 +10,7 @@ void Renderer::destroy()
     destroy_composite_pipeline();
     destroy_draw_pipeline();
     destroy_buffers();
-    destroy_atlas();
+    destroy_atlases();
     destroy_window_and_device();
 
     SDL_Quit();
@@ -20,14 +20,12 @@ void Renderer::destroy_window_and_device()
     SDL_DestroyGPUDevice(m_device);
     SDL_DestroyWindow(m_window);
 }
-void Renderer::destroy_atlas() { m_atlas.destroyGPUCache(); }
+void Renderer::destroy_atlases() { m_atlas.purgeGPUCache(); }
 void Renderer::destroy_buffers()
 {
     m_objectBuffer.destroy();
     m_textureBuffer.destroy();
-    m_rectangleBuffer.destroy();
-    m_ellipseBuffer.destroy();
-    m_lineBuffer.destroy();
+    m_shapeBuffer.destroy();
 }
 void Renderer::destroy_draw_pipeline() { SDL_ReleaseGPUGraphicsPipeline(m_device, m_drawPipeline); }
 void Renderer::destroy_composite_pipeline() { SDL_ReleaseGPUGraphicsPipeline(m_device, m_compositePipeline); }

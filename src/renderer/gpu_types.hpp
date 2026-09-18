@@ -13,7 +13,7 @@ struct GPUTextureObject
     float cropBottomRight[2];     // 56
 };
 
-struct GPURectangleObject
+struct GPUBasicShapeObject
 {
     float position[2]; // 0
     float size[2];     // 8
@@ -21,24 +21,6 @@ struct GPURectangleObject
     float angle;       // 24
     float _pad0;       // 28
     float color[4];    // 32
-};
-
-struct GPUEllipseObject
-{
-    float position[2]; // 0
-    float size[2];     // 8
-    float origin[2];   // 16
-    float angle;       // 24
-    float _pad0;       // 28
-    float color[4];    // 32
-};
-
-struct GPULineObject
-{
-    float a[2];      // 0
-    float b[2];      // 8
-    float color[4];  // 16
-    float thickness; // 32
 };
 
 struct GPUDrawObject
