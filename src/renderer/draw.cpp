@@ -20,16 +20,17 @@ void Renderer::draw(const DrawCommand &command, px::Color clearColor, bool dumpS
     SDL_GPURenderPass *clearPass = SDL_BeginGPURenderPass(commandBuffer, &colorTargetInfo, 1, nullptr);
     SDL_EndGPURenderPass(clearPass);
 
+    draw_upload_objects(command, commandBuffer);
+
+    size_t currentInstance = 0;
     for (const DrawLayerData &layer : command.getLayers())
     {
-        const std::multiset<DrawInfo> &objects = layer.layer.getObjects();
-        if (objects.size() > m_maxObjects)
-        {
-            continue;
-        }
-        draw_upload_objects(objects, commandBuffer);
-        draw_layer(commandBuffer, (Uint32)objects.size());
+        size_t layerObjectCount = layer.layer.getObjects().size();
+
+        draw_layer(commandBuffer, (Uint32)currentInstance, (Uint32)layerObjectCount);
         draw_composite(commandBuffer, layer.blendMode);
+
+        currentInstance += layerObjectCount;
     }
 
     SDL_GPUTexture *swapchainTexture;

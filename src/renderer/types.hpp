@@ -76,7 +76,7 @@ enum class DrawLayerBlendMode
 
 struct DrawInfo
 {
-    DrawInfoType type;
+    DrawInfoType object;
     int zIndex = 0;
 
     bool operator<(const DrawInfo &other) const { return zIndex < other.zIndex; }
@@ -88,7 +88,7 @@ class DrawLayer
     void addSprite(DrawInfoType info, int zIndex)
     {
         DrawInfo info_;
-        info_.type   = info;
+        info_.object = info;
         info_.zIndex = zIndex;
         m_objects.insert(info_);
     }

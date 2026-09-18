@@ -1,6 +1,6 @@
 #include "renderer.hpp"
 
-void Renderer::draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 instanceCount)
+void Renderer::draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 startObject, Uint32 objectCount)
 {
     SDL_GPUColorTargetInfo colorTargetInfo{};
     colorTargetInfo.clear_color   = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -23,7 +23,7 @@ void Renderer::draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 instanceCo
 
     SDL_BindGPUFragmentSamplers(renderPass, 0, &atlasBinding, 1);
 
-    SDL_DrawGPUPrimitives(renderPass, 6, instanceCount, 0, 0);
+    SDL_DrawGPUPrimitives(renderPass, 6, objectCount, 0, startObject);
 
     SDL_EndGPURenderPass(renderPass);
 }

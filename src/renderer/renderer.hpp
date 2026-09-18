@@ -39,8 +39,8 @@ class Renderer
     uint64_t uploadStaticTexture(px::Texture &&texture) { return uploadStaticTexture(texture); }
 
   private:
-    void draw_upload_objects(const std::multiset<DrawInfo> &objects, SDL_GPUCommandBuffer *commandBuffer);
-    void draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 instanceCount);
+    void draw_upload_objects(const DrawCommand &command, SDL_GPUCommandBuffer *commandBuffer);
+    void draw_layer(SDL_GPUCommandBuffer *commandBuffer, Uint32 startObject, Uint32 objectCount);
     void draw_composite(SDL_GPUCommandBuffer *commandBuffer, DrawLayerBlendMode blendMode);
     void draw_blit_to_swapchain_texture(SDL_GPUCommandBuffer *commandBuffer, SDL_GPUTexture *swapchainTexture,
                                         Uint32 width, Uint32 height);
