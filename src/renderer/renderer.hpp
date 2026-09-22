@@ -2,7 +2,7 @@
 
 #include "atlas/atlas.hpp"
 #include "gpu_types.hpp"
-#include "renderer/object_buffer.hpp"
+#include "object_buffer.hpp"
 #include "types.hpp"
 #include <SDL3/SDL_gpu.h>
 #include <SDL3/SDL_stdinc.h>
@@ -66,7 +66,7 @@ class Renderer
 
     GPUTextureAtlas m_atlas;
     const Uint32 m_maxObjects = 1;
-    ObjectBuffer<GPUDrawObject> m_objectBuffer;
-    ObjectBuffer<GPUTextureObject> m_textureBuffer;
-    ObjectBuffer<GPUBasicShapeObject> m_shapeBuffer;
+    GPUObjectBuffer<GPUDrawObject> m_objectBuffer;
+    GPUObjectBuffer<GPUTextureObject> m_textureBuffer;
+    GPUObjectBuffer<GPUBasicShapeObject> m_shapeBuffer;
 };

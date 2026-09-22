@@ -45,7 +45,8 @@ int main()
             ellipse.position = {i * 50.0f + 200, 200};
             ellipse.size     = {300, 50};
             ellipse.color = {255, 0, 0, 255};
-            ellipse.fill = false;
+            ellipse.fill = true;
+            ellipse.angle = px::Degrees{45};
             ellipse.outlineThickness = 3;
             layer.addSprite(ellipse, i);
         }

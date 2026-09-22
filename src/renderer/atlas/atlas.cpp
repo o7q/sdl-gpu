@@ -2,7 +2,7 @@
 
 #include <px/log.hpp>
 
-void GPUTextureAtlas::init(SDL_GPUDevice *device) { p_device = device; }
+void GPUTextureAtlas::assignGPU(SDL_GPUDevice *device) { p_device = device; }
 void GPUTextureAtlas::purge()
 {
     purgeGPUCache();

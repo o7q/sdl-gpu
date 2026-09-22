@@ -24,7 +24,7 @@ struct AtlasUVIndex
 class GPUTextureAtlas
 {
   public:
-    void init(SDL_GPUDevice *device);
+    void assignGPU(SDL_GPUDevice *device);
     void purge();
     void purgeGPUCache();
 

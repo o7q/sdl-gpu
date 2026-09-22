@@ -4,7 +4,7 @@
 #include <cstring>
 #include <vector>
 
-template <typename T> class ObjectBuffer
+template <typename T> class GPUObjectBuffer
 {
   public:
     void init(SDL_GPUDevice *device, Uint32 maxObjects)

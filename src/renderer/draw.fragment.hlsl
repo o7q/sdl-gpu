@@ -66,7 +66,14 @@ float4 main(Input input) : SV_TARGET
         case 1:
         {
             GPUBasicShapeObject shape = shapeBuffer[object.index];
-            color = shape.color;
+
+            if (shape.fill)
+            {
+                color = shape.color;
+            }
+            else {
+                // TODO: outline
+            }
         }
         break;
         case 2:
@@ -83,10 +90,11 @@ float4 main(Input input) : SV_TARGET
                 }
             }
             else {     
-                if (uv.x * uv.x + uv.y * uv.y < 0.25f && uv.x * uv.x + uv.y * uv.y > 0.2444444f)
-                {
-                    color = shape.color;
-                }
+                // TODO: outline
+                // if (uv.x * uv.x + uv.y * uv.y < 0.25f && uv.x * uv.x + uv.y * uv.y > 0.2444444f)
+                // {
+                    //     color = shape.color;
+                // }
             }
         }
         break;

@@ -6,10 +6,7 @@
 #include <px/math/angle.hpp>
 #include <px/math/vec.hpp>
 #include <px/variant_bp.hpp>
-#include <set>
 #include <variant>
-
-using TextureType = std::variant<uint64_t, px::Texture>;
 
 struct TextureDrawInfo
 {

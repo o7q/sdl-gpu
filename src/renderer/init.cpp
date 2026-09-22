@@ -43,7 +43,7 @@ void Renderer::init_window_and_device()
     }
 }
 
-void Renderer::init_atlases() { m_atlas.init(m_device); }
+void Renderer::init_atlases() { m_atlas.assignGPU(m_device); }
 
 void Renderer::init_buffers()
 {
